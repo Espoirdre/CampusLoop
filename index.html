@@ -370,6 +370,146 @@ select.field { cursor: pointer; }
 .login-note b { font-weight: 600; color: var(--ink); }
 .login-note a { color: var(--accent); font-weight: 600; text-decoration: none; border-bottom: 1px solid currentColor; }
 
+/* --- 认证向导：分步、可回退、失败定位到环节 --- */
+.auth-steps { display: flex; margin-bottom: 28px; }
+.auth-step {
+  flex: 1;
+  background: none;
+  border: 0;
+  border-top: 2px solid var(--rule-soft);
+  padding: 11px 0 0;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: .16em;
+  color: var(--ink-4);
+  text-align: left;
+  transition: color .2s, border-color .2s;
+}
+.auth-step .idx { font-family: var(--serif); margin-right: 6px; letter-spacing: 0; }
+.auth-step.on { color: var(--ink); border-top-color: var(--ink); }
+.auth-step.done { color: var(--ink-3); border-top-color: var(--ink-3); cursor: pointer; }
+.auth-step.done:hover { color: var(--ink); border-top-color: var(--ink); }
+
+.auth-body { margin-top: 26px; }
+.auth-pane { animation: authIn .3s var(--ease); }
+@keyframes authIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+
+.auth-hint { margin-top: 10px; font-size: 11.5px; line-height: 1.75; color: var(--ink-3); }
+.auth-hint.is-err { color: var(--accent); }
+.auth-hint a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.auth-hint a:hover { color: var(--accent); border-color: var(--accent); }
+
+.auth-probe {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule-soft);
+  background: var(--paper-2);
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.auth-probe .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); flex: none; }
+.auth-probe.is-run .dot { background: var(--accent); animation: pulseDot 1s infinite; }
+.auth-probe.is-ok .dot { background: #2F6B4F; }
+@keyframes pulseDot { 50% { opacity: .2; } }
+
+.auth-demo { margin-top: 16px; font-size: 11.5px; }
+.auth-demo a { color: var(--accent); font-weight: 600; text-decoration: none; border-bottom: 1px solid currentColor; }
+
+.pwd-wrap { position: relative; display: flex; align-items: center; }
+.pwd-wrap input { padding-right: 34px; }
+.pwd-eye {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--ink-3);
+  display: grid;
+  place-items: center;
+}
+.pwd-eye:hover { color: var(--ink); }
+
+.auth-id {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  margin-bottom: 22px;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+.auth-id .who { flex: 1; min-width: 0; }
+.auth-id .who b { display: block; font-family: var(--serif); font-size: 14px; font-weight: 400; }
+.auth-id .who span { font-size: 11px; color: var(--ink-3); letter-spacing: .04em; }
+.auth-id button {
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ink-3);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-id button:hover { color: var(--accent); }
+.auth-id .pass { font-size: 11px; letter-spacing: .08em; color: #2F6B4F; flex: none; }
+
+.auth-captcha { display: flex; gap: 14px; align-items: flex-start; }
+.auth-captcha-img {
+  width: 108px;
+  height: 46px;
+  flex: none;
+  border: 1px solid var(--rule);
+  background: var(--paper-3);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+.auth-captcha-field { flex: 1; margin: 0; }
+
+.auth-switch { display: flex; align-items: center; gap: 9px; margin-top: 6px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.auth-switch input { width: 14px; height: 14px; accent-color: var(--ink); }
+
+.auth-web { margin-top: 16px; border: 1px solid var(--rule); animation: authIn .3s var(--ease); }
+.auth-web-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-3);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.auth-web-body { padding: 18px 14px; background: var(--paper-2); font-size: 12px; color: var(--ink-2); }
+.auth-bar { height: 3px; margin-top: 12px; background: var(--paper-4); overflow: hidden; }
+.auth-bar i { display: block; height: 100%; width: 0; background: var(--ink); animation: authFill 1.4s var(--ease) forwards; }
+@keyframes authFill { to { width: 100%; } }
+
+.auth-foot { display: flex; align-items: center; gap: 10px; margin-top: 28px; }
+.auth-foot .btn { flex: 1; }
+.auth-back {
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 10px 0;
+  white-space: nowrap;
+}
+.auth-back:hover { color: var(--ink); }
+
 /* =========================================================
    7. 顶部导航
    ========================================================= */
@@ -1857,34 +1997,18 @@ select.field { cursor: pointer; }
 
   <div class="login-right">
     <div class="login-card">
-      <h2>统一身份认证</h2>
-      <p class="sub">请使用学校统一身份认证账号登录</p>
 
-      <div class="login-fields">
-        <div class="login-field">
-          <label for="loginSid">学号 / 工号</label>
-          <input id="loginSid" type="text" placeholder="例如 2023010101" autocomplete="username">
-        </div>
+      <div class="auth-steps" id="authSteps"></div>
 
-        <div class="login-field">
-          <label for="loginPwd">密码</label>
-          <input id="loginPwd" type="password" placeholder="统一身份认证密码" autocomplete="current-password">
-        </div>
-
-        <div class="login-row">
-          <label><input id="loginRemember" type="checkbox" checked> 记住我</label>
-          <a href="javascript:void 0" onclick="toast('校内网环境下请联系信息中心重置密码', 'err')">忘记密码？</a>
-        </div>
-
-        <div class="login-err" id="loginErr"></div>
-
-        <button class="btn btn-solid btn-lg btn-block" id="loginBtn">登 录</button>
+      <div class="auth-head">
+        <h2 id="authTitle">核验身份</h2>
+        <p class="sub" id="authSub">请使用学校统一身份认证账号登录</p>
       </div>
 
-      <div class="login-note">
-        <b>演示说明：</b>本页未接入真实认证系统，输入<b>任意学号 + 任意密码</b>即可进入。
-        <a href="javascript:void 0" id="quickFill">一键填入演示账号 →</a>
-      </div>
+      <div class="auth-body" id="authBody"></div>
+
+      <div id="authFoot"></div>
+
     </div>
   </div>
 
@@ -3943,9 +4067,43 @@ function runHeroSearch() {
 }
 
 /* =========================================================
-   十九、登录 / 退出
+   十九、认证向导 / 登录 / 退出
+
+   借鉴真实教务 App 的认证流程：分步、每步只做一件事、可逐步回退，
+   失败时定位到具体环节（格式 / 密码 / 人机校验），并保留网页认证兜底。
    ========================================================= */
 var sessionUser = null;
+
+var AUTH = {
+  step: 'sid',
+  sid: '',
+  name: '',
+  fails: 0,
+  needCode: false,
+  captcha: '',
+  remember: true,
+  notify: true
+};
+
+var AUTH_META = {
+  sid:  { idx: '身份', title: '核验身份', sub: '先确认学号归属，再进入统一身份认证' },
+  pwd:  { idx: '密码', title: '验证密码', sub: '密码在本机加密后提交，本站不保存明文' },
+  code: { idx: '校验', title: '安全校验', sub: '检测到连续失败的尝试，需要完成一次人机校验' },
+  done: { idx: '完成', title: '还差一步', sub: '确认昵称与提醒设置，就可以进站了' }
+};
+
+function authSeq() {
+  var seq = ['sid', 'pwd'];
+  if (AUTH.needCode) seq.push('code');
+  seq.push('done');
+  return seq;
+}
+
+function sidGrade(sid) {
+  var year = sid.slice(0, 4);
+  if (!/^20\d{2}$/.test(year)) return '年级未知';
+  return year + ' 级';
+}
 
 function findSeededName(sid) {
   var pools = [DB.lost, DB.market, DB.wall];
@@ -3958,34 +4116,378 @@ function findSeededName(sid) {
   return null;
 }
 
-function doLogin() {
-  var sid = $('#loginSid').value.trim();
-  var password = $('#loginPwd').value;
-  var remember = $('#loginRemember').checked;
-  var errBox = $('#loginErr');
+function defaultName(sid) {
+  return findSeededName(sid) || ('同学' + sid.slice(-4));
+}
 
-  if (!sid) {
-    errBox.textContent = '请输入学号或工号';
-    $('#loginSid').focus();
+function sidHintText(sid) {
+  if (!sid) return '10 位数字，前四位为入学年份';
+  if (sid.length < 10) return '还差 ' + (10 - sid.length) + ' 位';
+  return sidGrade(sid) + ' · 学号格式正确';
+}
+
+var probeTimer = null;
+
+function authProbeSync() {
+  var box = document.querySelector('.auth-probe');
+  var text = $('#authProbeText');
+  if (!box || !text) return;
+  clearTimeout(probeTimer);
+
+  if (!/^\d{10}$/.test(AUTH.sid)) {
+    box.className = 'auth-probe';
+    text.textContent = '认证节点 · 未连接';
     return;
   }
-  if (password.length < 1) {
-    errBox.textContent = '请输入统一身份认证密码';
-    $('#loginPwd').focus();
+
+  box.className = 'auth-probe is-run';
+  text.textContent = '正在连接统一身份认证服务…';
+
+  probeTimer = setTimeout(function () {
+    if (!$('#authProbeText')) return;
+    box.className = 'auth-probe is-ok';
+    text.textContent = '已连接 · 认证节点 18 ms · ' + sidGrade(AUTH.sid);
+  }, 620);
+}
+
+var AUTH_VIEW = {
+
+  sid: function () {
+    return '<div class="auth-pane">' +
+      '<div class="login-field">' +
+        '<label for="loginSid">学号 / 工号</label>' +
+        '<input id="loginSid" type="text" inputmode="numeric" autocomplete="username" ' +
+          'placeholder="例如 2023013872" value="' + escapeHtml(AUTH.sid) + '">' +
+      '</div>' +
+      '<div class="auth-hint" id="authHint">' + sidHintText(AUTH.sid) + '</div>' +
+      '<div class="auth-probe"><span class="dot"></span><span id="authProbeText">认证节点 · 未连接</span></div>' +
+      '<div class="auth-demo">' +
+        '<a href="javascript:void 0" id="quickFill" data-act="auth-demo">一键填入演示账号 →</a>' +
+      '</div>' +
+    '</div>';
+  },
+
+  pwd: function () {
+    return '<div class="auth-pane">' +
+      '<div class="auth-id">' + avatarOf(AUTH.name, 34, 15) +
+        '<div class="who"><b>' + escapeHtml(AUTH.name) + '</b>' +
+        '<span>学号 ' + escapeHtml(AUTH.sid) + ' · ' + sidGrade(AUTH.sid) + '</span></div>' +
+        '<button type="button" data-act="auth-goto" data-step="sid">更换</button>' +
+      '</div>' +
+      '<div class="login-field">' +
+        '<label for="loginPwd">统一身份认证密码</label>' +
+        '<div class="pwd-wrap">' +
+          '<input id="loginPwd" type="password" autocomplete="current-password" placeholder="请输入密码">' +
+          '<button class="pwd-eye" type="button" data-act="auth-eye" aria-label="显示密码">' + icon('eye', 15) + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="login-err" id="loginErr"></div>' +
+      '<div class="login-row">' +
+        '<label><input id="loginRemember" type="checkbox"' + (AUTH.remember ? ' checked' : '') + '> 记住学号（不记密码）</label>' +
+        '<a href="javascript:void 0" data-act="auth-forgot">忘记密码？</a>' +
+      '</div>' +
+      '<div class="auth-hint">演示环境：任意 6 位以上字符均可通过。<br>' +
+        '<a href="javascript:void 0" data-act="auth-forcefail">模拟认证失败 →</a></div>' +
+    '</div>';
+  },
+
+  code: function () {
+    return '<div class="auth-pane">' +
+      '<div class="auth-captcha">' +
+        '<div class="auth-captcha-img" id="captchaImg" data-act="auth-captcha-reload" title="点我换一张"></div>' +
+        '<div class="auth-captcha-field login-field">' +
+          '<label for="authCode">校验码</label>' +
+          '<input id="authCode" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="四位数字">' +
+        '</div>' +
+      '</div>' +
+      '<div class="login-err" id="loginErr"></div>' +
+      '<div class="auth-hint">看不清可点左侧图片换一张。也可以 ' +
+        '<a href="javascript:void 0" data-act="auth-web">改用网页登录 →</a></div>' +
+      '<div id="authWebSlot"></div>' +
+    '</div>';
+  },
+
+  done: function () {
+    return '<div class="auth-pane">' +
+      '<div class="auth-id">' + avatarOf(AUTH.name, 34, 15) +
+        '<div class="who"><b>' + escapeHtml(AUTH.name) + '</b>' +
+        '<span>学号 ' + escapeHtml(AUTH.sid) + ' · ' + sidGrade(AUTH.sid) + '</span></div>' +
+        '<span class="pass">' + icon('check', 12) + ' 已认证</span>' +
+      '</div>' +
+      '<div class="login-field">' +
+        '<label for="authNick">显示昵称</label>' +
+        '<input id="authNick" type="text" maxlength="12" placeholder="站内展示的昵称" value="' + escapeHtml(AUTH.name) + '">' +
+      '</div>' +
+      '<label class="auth-switch">' +
+        '<input type="checkbox" id="authNotify"' + (AUTH.notify ? ' checked' : '') + '> 接收新留言与回复提醒' +
+      '</label>' +
+      '<div class="auth-hint">昵称随时可以在「个人中心」修改</div>' +
+    '</div>';
+  }
+};
+
+function authFootHtml() {
+  var seq = authSeq();
+  var pos = seq.indexOf(AUTH.step);
+
+  var back = pos > 0
+    ? '<button class="auth-back" data-act="auth-back">← 上一步</button>'
+    : '';
+
+  var label = {
+    sid: '继 续',
+    pwd: '验证并登录',
+    code: '提交校验',
+    done: '进入校园信息港'
+  }[AUTH.step];
+
+  return '<div class="auth-foot">' + back +
+    '<button class="btn btn-solid btn-lg" data-act="auth-next">' + label + '</button>' +
+  '</div>';
+}
+
+function renderAuth() {
+  var seq = authSeq();
+  var pos = seq.indexOf(AUTH.step);
+
+  $('#authSteps').innerHTML = seq.map(function (key, i) {
+    var cls = i === pos ? ' on' : (i < pos ? ' done' : '');
+    var attr = i < pos
+      ? ' data-act="auth-goto" data-step="' + key + '"'
+      : ' disabled';
+    return '<button type="button" class="auth-step' + cls + '"' + attr + '>' +
+      '<span class="idx">0' + (i + 1) + '</span>' + AUTH_META[key].idx + '</button>';
+  }).join('');
+
+  $('#authTitle').textContent = AUTH_META[AUTH.step].title;
+  $('#authSub').textContent = AUTH_META[AUTH.step].sub;
+  $('#authBody').innerHTML = AUTH_VIEW[AUTH.step]();
+  $('#authFoot').innerHTML = authFootHtml();
+
+  if (AUTH.step === 'sid') authProbeSync();
+  if (AUTH.step === 'code') drawCaptcha();
+
+  var field = $('#authBody input[type="text"], #authBody input[type="password"]');
+  if (field) field.focus();
+}
+
+function authBack() {
+  var seq = authSeq();
+  var pos = seq.indexOf(AUTH.step);
+  if (pos <= 0) return;
+  AUTH.step = seq[pos - 1];
+  renderAuth();
+}
+
+function authNext() {
+  var hint, err;
+
+  if (AUTH.step === 'sid') {
+    var sid = $('#loginSid').value.trim();
+    hint = $('#authHint');
+
+    if (!sid) {
+      hint.className = 'auth-hint is-err';
+      hint.textContent = '请先填写学号';
+      return;
+    }
+    if (!/^\d+$/.test(sid)) {
+      hint.className = 'auth-hint is-err';
+      hint.textContent = '学号只能是数字，请检查是否混入了字母或空格';
+      return;
+    }
+    if (sid.length !== 10) {
+      hint.className = 'auth-hint is-err';
+      hint.textContent = '学号应为 10 位，当前 ' + sid.length + ' 位';
+      return;
+    }
+    if (!/^20\d{2}$/.test(sid.slice(0, 4))) {
+      hint.className = 'auth-hint is-err';
+      hint.textContent = '前四位应为入学年份，请核对后再试';
+      return;
+    }
+
+    AUTH.sid = sid;
+    AUTH.name = defaultName(sid);
+    AUTH.step = 'pwd';
+    renderAuth();
     return;
   }
-  errBox.textContent = '';
 
-  var name = findSeededName(sid) || ('同学' + sid.slice(-4));
-  var user = { name: name, sid: sid, color: avatarColor(sid) };
+  if (AUTH.step === 'pwd') {
+    var pwd = $('#loginPwd').value;
+    err = $('#loginErr');
+
+    if (!pwd) {
+      err.textContent = '请输入统一身份认证密码';
+      $('#loginPwd').focus();
+      return;
+    }
+    if (pwd.length < 6) {
+      err.textContent = '密码长度不足 6 位，请确认是否输入完整';
+      $('#loginPwd').focus();
+      return;
+    }
+
+    AUTH.remember = $('#loginRemember').checked;
+    AUTH.step = 'done';
+    renderAuth();
+    toast('身份认证通过');
+    return;
+  }
+
+  if (AUTH.step === 'code') {
+    var code = $('#authCode').value.trim();
+    err = $('#loginErr');
+
+    if (code.length !== 4) {
+      err.textContent = '请输入 4 位校验码';
+      $('#authCode').focus();
+      return;
+    }
+    if (code !== AUTH.captcha) {
+      err.textContent = '校验码不正确，已为你换一张';
+      drawCaptcha();
+      $('#authCode').value = '';
+      $('#authCode').focus();
+      return;
+    }
+
+    AUTH.needCode = false;
+    AUTH.step = 'done';
+    renderAuth();
+    toast('校验通过');
+    return;
+  }
+
+  /* done */
+  var nick = $('#authNick').value.trim();
+  if (nick) AUTH.name = nick;
+  AUTH.notify = $('#authNotify').checked;
+  finishLogin();
+}
+
+function finishLogin() {
+  var user = { name: AUTH.name, sid: AUTH.sid, color: avatarColor(AUTH.sid) };
 
   sessionUser = user;
-  DB.user = remember ? user : null;
+  DB.user = AUTH.remember ? user : null;
+  DB.notify = AUTH.notify;
   saveDB();
 
   enterApp();
-  toast('欢迎回来，' + name, 'ok');
+  toast('欢迎回来，' + user.name, 'ok');
 }
+
+function fillDemoAccount() {
+  AUTH.sid = '2023013872';
+  AUTH.step = 'sid';
+  renderAuth();
+  toast('已填入演示账号，密码随便填 6 位以上');
+}
+
+function togglePwdVisible() {
+  var input = $('#loginPwd');
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  input.focus();
+}
+
+function simulateAuthFail() {
+  AUTH.fails += 1;
+
+  if (AUTH.fails >= 2) {
+    AUTH.fails = 0;
+    AUTH.needCode = true;
+    AUTH.step = 'code';
+    renderAuth();
+    toast('连续失败，已转入安全校验', 'err');
+    return;
+  }
+
+  var err = $('#loginErr');
+  if (err) err.textContent = '认证失败：账号或密码不正确（还可尝试 1 次）';
+}
+
+function drawCaptcha() {
+  var box = $('#captchaImg');
+  if (!box) return;
+
+  var code = '';
+  for (var i = 0; i < 4; i++) code += Math.floor(Math.random() * 10);
+  AUTH.captcha = code;
+
+  var svg = '<svg width="108" height="46" viewBox="0 0 108 46" aria-hidden="true">';
+
+  for (var l = 0; l < 4; l++) {
+    svg += '<line x1="' + randInt(0, 108) + '" y1="' + randInt(0, 46) + '" x2="' + randInt(0, 108) +
+      '" y2="' + randInt(0, 46) + '" stroke="#C4B79F" stroke-width="0.7"/>';
+  }
+  for (var c = 0; c < 4; c++) {
+    var x = 18 + c * 22;
+    svg += '<text x="' + x + '" y="32" font-family="Georgia, serif" font-size="21" fill="#1B1712" ' +
+      'transform="rotate(' + randInt(-12, 12) + ' ' + x + ' 26)">' + code.charAt(c) + '</text>';
+  }
+
+  svg += '</svg>';
+  box.innerHTML = svg;
+}
+
+function randInt(min, max) {
+  return Math.round(min + Math.random() * (max - min));
+}
+
+function webLoginFallback() {
+  var slot = $('#authWebSlot');
+  if (!slot) return;
+
+  slot.innerHTML =
+    '<div class="auth-web">' +
+      '<div class="auth-web-bar">' + icon('key', 12) +
+        '<span>iaaa.campusloop.edu.cn/oauth/authorize</span></div>' +
+      '<div class="auth-web-body">正在安全页面完成认证，请稍候…' +
+        '<div class="auth-bar"><i></i></div></div>' +
+    '</div>';
+
+  setTimeout(function () {
+    if (!$('#authWebSlot')) return;
+    AUTH.needCode = false;
+    AUTH.step = 'done';
+    renderAuth();
+    toast('网页认证成功，已获取登录凭据');
+  }, 1500);
+}
+
+function onAuthInput(event) {
+  var target = event.target;
+
+  if (target.id === 'loginSid') {
+    target.value = target.value.replace(/\D/g, '').slice(0, 10);
+    AUTH.sid = target.value;
+
+    var hint = $('#authHint');
+    if (hint) {
+      hint.className = 'auth-hint';
+      hint.textContent = sidHintText(target.value);
+    }
+    authProbeSync();
+  }
+
+  if (target.id === 'authNick') {
+    AUTH.name = target.value.trim() || AUTH.name;
+  }
+}
+
+function onAuthKey(event) {
+  if (event.key !== 'Enter') return;
+  if ($('#loginView').classList.contains('hidden')) return;
+  if (event.target.tagName !== 'INPUT') return;
+  event.preventDefault();
+  authNext();
+}
+
+document.addEventListener('input', onAuthInput);
+document.addEventListener('keydown', onAuthKey);
 
 function enterApp() {
   $('#loginView').classList.add('hidden');
@@ -3997,8 +4499,18 @@ function enterApp() {
 function showLogin() {
   $('#app').classList.add('hidden');
   $('#loginView').classList.remove('hidden');
-  $('#loginPwd').value = '';
-  $('#loginErr').textContent = '';
+
+  AUTH = {
+    step: 'sid',
+    sid: '',
+    name: '',
+    fails: 0,
+    needCode: false,
+    captcha: '',
+    remember: true,
+    notify: true
+  };
+  renderAuth();
 }
 
 function doLogout() {
@@ -4184,6 +4696,48 @@ function bindEvents() {
         renderUploader();
         break;
 
+      case 'auth-next':
+        authNext();
+        break;
+
+      case 'auth-back':
+        authBack();
+        break;
+
+      case 'auth-goto':
+        if (el.dataset.step === 'sid') {
+          AUTH.fails = 0;
+          AUTH.needCode = false;
+          AUTH.captcha = '';
+        }
+        AUTH.step = el.dataset.step;
+        renderAuth();
+        break;
+
+      case 'auth-demo':
+        fillDemoAccount();
+        break;
+
+      case 'auth-eye':
+        togglePwdVisible();
+        break;
+
+      case 'auth-forgot':
+        toast('校内网环境下请联系信息中心重置密码', 'err');
+        break;
+
+      case 'auth-forcefail':
+        simulateAuthFail();
+        break;
+
+      case 'auth-captcha-reload':
+        drawCaptcha();
+        break;
+
+      case 'auth-web':
+        webLoginFallback();
+        break;
+
       default:
         break;
     }
@@ -4230,9 +4784,6 @@ function bindEvents() {
     } else if (target.id === 'wallInput' && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
       postNote();
-    } else if (target.id === 'loginSid' || target.id === 'loginPwd') {
-      event.preventDefault();
-      doLogin();
     }
   });
 
@@ -4277,15 +4828,6 @@ function bindEvents() {
       title: 'CampusLoop · 校园信息港',
       text: '课程实践项目，纯前端实现。失物招领、二手交易、留言墙三合一，数据保存在浏览器本地，不会上传到服务器。'
     });
-  });
-
-  $('#loginBtn').addEventListener('click', doLogin);
-
-  $('#quickFill').addEventListener('click', function () {
-    $('#loginSid').value = '2023013872';
-    $('#loginPwd').value = '123456';
-    $('#loginErr').textContent = '';
-    toast('已填入演示账号，点登录即可进入');
   });
 }
 
