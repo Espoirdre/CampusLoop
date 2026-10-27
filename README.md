@@ -140,3 +140,57 @@ npx serve .
 - [ ] 站内私信，替代「加微信」的第一步
 - [ ] 智能匹配：发布寻物启事时自动推荐相似招领信息
 - [ ] 管理员后台：审核、下架、举报处理
+
+---
+
+## 八、版本管理
+
+每一次改动都会留下一条 git 记录，谁改的、改了什么、哪一行变了都能查到。
+
+### 日常提交
+
+```bash
+git add -A
+git commit -m "feat: 新增智能匹配推荐"
+git push
+```
+
+提交信息建议用前缀标明类型，方便回看：
+
+| 前缀 | 含义 |
+| --- | --- |
+| `feat:` | 新功能 |
+| `fix:` | 修 bug |
+| `style:` | 只改视觉样式 |
+| `refactor:` | 重构，不改功能 |
+| `docs:` | 文档 |
+
+### 查看历史
+
+```bash
+git log --oneline            # 所有版本，一行一条
+git log -p                   # 连改动内容一起看
+git show <commit-id>         # 看某一次提交
+git diff v1.0.0 HEAD         # 和某个版本对比
+```
+
+GitHub 上更直观：仓库首页点 `Commits` 看全部提交，点进任意一条就是逐行 diff。
+
+### 打版本号
+
+```bash
+git tag -a v1.1.0 -m "新增私信功能"
+git push origin v1.1.0
+```
+
+打过的标签会出现在 GitHub 的 `Releases` / `Tags` 里，老师一眼能看到迭代节奏。
+
+### 推送失败时
+
+远程用的是 SSH（`git@github.com:Espoirdre/CampusLoop.git`）。如果提示 `Permission denied (publickey)`，先验证密钥：
+
+```bash
+ssh -T git@github.com
+```
+
+本机 `~/.ssh/config` 已配置走 `ssh.github.com:443`，所以不需要开代理也能推。
