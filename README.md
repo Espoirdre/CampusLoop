@@ -3,6 +3,9 @@
 > VibeCoding 实战 · 小组作业
 > 一个纯前端的校园信息互助平台：**失物招领 / 二手市场 / 留言墙** 三合一。
 
+**在线预览**：<https://espoirdre.github.io/CampusLoop/>
+**代码仓库**：<https://github.com/Espoirdre/CampusLoop>
+
 打开 `index.html` 就能用，不需要安装任何依赖、不需要后端服务。
 
 ![首页](docs/screenshots/02-home.jpg)
