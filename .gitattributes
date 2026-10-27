@@ -1,0 +1,8 @@
+# 统一换行符，避免 Windows 下产生无意义的 diff
+* text=auto eol=lf
+
+# 二进制资源不要做换行转换
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.ico binary
