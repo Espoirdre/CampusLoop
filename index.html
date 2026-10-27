@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CampusLoop · 校园信息港 — 失物招领 / 二手市场 / 留言墙</title>
+<title>CampusLoop — 失物招领 / 二手市场 / 留言墙</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231B1712'/%3E%3Ctext x='50' y='73' font-size='56' text-anchor='middle' fill='%23F5F0E6' font-family='Georgia,serif'%3E%E6%A0%A1%3C/text%3E%3C/svg%3E">
 <style>
 /* =========================================================
-   CampusLoop · 校园信息港 · 编辑杂志风
+   CampusLoop · 编辑杂志风
    设计基调：纸感米白 / 衬线大标题 / 细线分隔 / 朱红点缀
    ========================================================= */
 
@@ -1386,6 +1386,30 @@ select.field { cursor: pointer; }
   letter-spacing: .06em;
   margin-top: 4px;
 }
+.profile-info .profile-bio {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  letter-spacing: .01em;
+  margin-top: 8px;
+  max-width: 420px;
+  line-height: 1.7;
+}
+.profile-info h2 .link-btn { margin-left: 12px; vertical-align: middle; }
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color .2s;
+}
+.link-btn:hover { color: var(--accent); }
 .profile-stats { margin-left: auto; display: flex; gap: 0; border-left: 1px solid var(--rule); }
 .profile-stat {
   padding: 2px 26px;
@@ -1959,6 +1983,7 @@ select.field { cursor: pointer; }
   .wordmark .zh { font-size: 16px; }
   .topbar-right .btn .txt { display: none; }
   .section-head .num { display: none; }
+  .profile-info h2 .link-btn { display: block; margin: 7px 0 0; }
 }
 </style>
 </head>
@@ -1976,7 +2001,7 @@ select.field { cursor: pointer; }
           <path d="M12 3 2.5 8 12 13l9.5-5L12 3Z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/>
         </svg>
       </div>
-      <span>校园信息港</span>
+      <span>CampusLoop</span>
     </div>
 
     <h1>把丢失的找回，<br>让闲置<em>流动</em>起来</h1>
@@ -2023,8 +2048,7 @@ select.field { cursor: pointer; }
   <header class="topbar">
     <div class="topbar-inner">
       <div class="wordmark" data-view="home">
-        <span class="zh">校园信息港</span>
-        <span class="en">CAMPUSLOOP</span>
+        <span class="zh">CampusLoop</span>
       </div>
 
       <nav class="nav" id="nav">
@@ -2076,7 +2100,7 @@ select.field { cursor: pointer; }
         <button data-view="wall">留言墙</button>
         <button id="aboutBtn">关于本站</button>
       </div>
-      <div class="copy">© 2026 <b>CampusLoop · 校园信息港</b> · 课程实践项目 · 数据保存在本地浏览器</div>
+      <div class="copy">© 2026 <b>CampusLoop</b> · 课程实践项目 · 数据保存在本地浏览器</div>
     </div>
   </footer>
 
@@ -2127,6 +2151,29 @@ select.field { cursor: pointer; }
 
 
 <!-- ============================================================
+     编辑个人资料弹窗
+     ============================================================ -->
+<div id="profileModal" class="modal hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h3>编辑个人资料</h3>
+        <div class="sub">这些信息会展示在你的发布与留言旁边</div>
+      </div>
+      <button class="sheet-close" data-close="profileModal">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="profileFormBody"></div>
+    <div class="sheet-foot">
+      <button class="btn" data-close="profileModal">取消</button>
+      <button class="btn btn-solid" data-act="profile-save">保存资料</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
      确认弹窗
      ============================================================ -->
 <div id="confirmModal" class="modal hidden">
@@ -2147,7 +2194,7 @@ select.field { cursor: pointer; }
 
 <script>
 /* =========================================================================
-   CampusLoop · 校园信息港
+   CampusLoop
    纯前端实现 · 数据保存在 localStorage
    -------------------------------------------------------------------------
    所有读写都集中在 Store 对象里。日后升级云端数据库，
@@ -2634,7 +2681,10 @@ function seedData() {
       }
     ],
 
-    favs: {}
+    favs: {},
+
+    /** 个人资料（按学号存）：昵称 / 院系 / 联系方式 / 简介 由用户自己维护 */
+    profiles: {}
   };
 }
 
@@ -2671,6 +2721,7 @@ function initDB() {
     Store.write(DB);
   }
   if (!DB.favs) DB.favs = {};
+  if (!DB.profiles) DB.profiles = {};
   if (!Array.isArray(DB.lost)) DB.lost = [];
   if (!Array.isArray(DB.market)) DB.market = [];
   if (!Array.isArray(DB.wall)) DB.wall = [];
@@ -3318,6 +3369,72 @@ function postNote() {
 /* =========================================================
    十三、个人中心
    ========================================================= */
+function openProfileEditor() {
+  var me = currentUser();
+  var prof = profileOf(me.sid) || {};
+
+  $('#profileFormBody').innerHTML =
+    '<div class="form-item">' +
+      '<label>昵称<span class="req">*</span></label>' +
+      '<input class="field" id="pfName" maxlength="12" placeholder="2–12 个字" value="' +
+        escapeHtml(prof.name || me.name) + '">' +
+      '<div class="form-hint">改名后，你已发布的内容会一起显示新昵称</div>' +
+    '</div>' +
+    '<div class="form-item">' +
+      '<label>院系 / 专业</label>' +
+      '<input class="field" id="pfDept" maxlength="24" placeholder="例如：计算机科学与技术 · 2023 级" value="' +
+        escapeHtml(prof.dept || '') + '">' +
+    '</div>' +
+    '<div class="form-item">' +
+      '<label>联系方式</label>' +
+      '<input class="field" id="pfContact" maxlength="40" placeholder="微信 / QQ / 手机号" value="' +
+        escapeHtml(prof.contact || '') + '">' +
+      '<div class="form-hint">发布新内容时会自动带出</div>' +
+    '</div>' +
+    '<div class="form-item">' +
+      '<label>一句话简介</label>' +
+      '<textarea class="field" id="pfBio" maxlength="40" placeholder="例如：常在图书馆四楼出没，捡到东西可以找我">' +
+        escapeHtml(prof.bio || '') + '</textarea>' +
+      '<div class="form-hint">最多 40 字</div>' +
+    '</div>';
+
+  $('#profileModal').classList.remove('hidden');
+}
+
+function saveProfile() {
+  var me = currentUser();
+  var name = $('#pfName').value.trim();
+
+  if (name.length < 2) {
+    toast('昵称至少 2 个字', 'err');
+    $('#pfName').focus();
+    return;
+  }
+
+  DB.profiles[me.sid] = {
+    name: name,
+    dept: $('#pfDept').value.trim(),
+    contact: $('#pfContact').value.trim(),
+    bio: $('#pfBio').value.trim()
+  };
+
+  /* 改名后同步历史内容上的作者名，避免出现「同一学号两个名字」 */
+  [DB.lost, DB.market, DB.wall].forEach(function (list) {
+    list.forEach(function (item) {
+      if (item.user && item.user.sid === me.sid) item.user.name = name;
+    });
+  });
+
+  me.name = name;
+  if (DB.user && DB.user.sid === me.sid) DB.user.name = name;
+
+  saveDB();
+  $('#profileModal').classList.add('hidden');
+  renderProfile();
+  updateUserUI();
+  toast('资料已更新');
+}
+
 function renderProfile() {
   var view = $('#viewProfile');
   var me = currentUser();
@@ -3329,11 +3446,18 @@ function renderProfile() {
 
   var html = '';
 
+  var prof = profileOf(me.sid) || {};
+
   html += '<div class="profile-head">' +
     avatarOf(me.name, 58, 25) +
     '<div class="profile-info">' +
-      '<h2>' + escapeHtml(me.name) + '</h2>' +
-      '<p>学号 ' + escapeHtml(me.sid) + '</p>' +
+      '<h2>' + escapeHtml(me.name) +
+        '<button class="link-btn" data-act="profile-edit">编辑资料</button>' +
+      '</h2>' +
+      '<p>学号 ' + escapeHtml(me.sid) +
+        (prof.dept ? ' · ' + escapeHtml(prof.dept) : '') + '</p>' +
+      (prof.bio ? '<p class="profile-bio">' + escapeHtml(prof.bio) + '</p>' : '') +
+      (prof.contact ? '<p class="profile-bio">' + escapeHtml(prof.contact) + '</p>' : '') +
     '</div>' +
     '<div class="profile-stats">' +
       '<div class="profile-stat"><strong>' + (myLost.length + myMarket.length) + '</strong><span>发布</span></div>' +
@@ -3602,6 +3726,10 @@ function renderPublishForm() {
   var isLost = type !== 'market';
   var html = '';
 
+  /* 资料里填过联系方式就自动带出，省得每次重复输入 */
+  var me = currentUser();
+  var savedContact = me ? ((profileOf(me.sid) || {}).contact || '') : '';
+
   html += '<div class="form-grid">';
 
   if (isLost) {
@@ -3677,7 +3805,8 @@ function renderPublishForm() {
 
   html += '<div class="form-item">' +
     '<label>联系方式<span class="req">*</span></label>' +
-    '<input class="field" id="pubContact" maxlength="60" placeholder="微信 / QQ / 手机号，例如：微信 abc12345">' +
+    '<input class="field" id="pubContact" maxlength="60" placeholder="微信 / QQ / 手机号，例如：微信 abc12345" value="' +
+      escapeHtml(savedContact) + '">' +
   '</div>';
 
   html += '</div>';
@@ -4074,6 +4203,45 @@ function runHeroSearch() {
    ========================================================= */
 var sessionUser = null;
 
+/* 演示用账号白名单
+   纯前端接不了真实统一认证，这里用本地白名单模拟「学号 + 密码」校验：
+   学号不在表里 → 提示未开通；密码不符 → 记一次失败，满 3 次转人机校验。 */
+var DEMO_PASSWORD = 'campus2026';
+
+var ACCOUNTS = [
+  { sid: '2023013872', name: '张明' },
+  { sid: '2023015566', name: '刘浩然' },
+  { sid: '2023023311', name: '黄子豪' },
+  { sid: '2023052744', name: '王思远' },
+  { sid: '2024021183', name: '李雨桐' },
+  { sid: '2022036621', name: '陈嘉豪' },
+  { sid: '2024031987', name: '赵一诺' },
+  { sid: '2023047712', name: '孙悦' },
+  { sid: '2021010234', name: '周子涵' },
+  { sid: '2022078899', name: '林川' },
+  { sid: '2022045566', name: '郑晓' },
+  { sid: '2022018899', name: '吴桐' },
+  { sid: '2021051122', name: '马辰' },
+  { sid: '2024031099', name: '许安然' },
+  { sid: '2023064567', name: '何佳' }
+];
+
+function findAccount(sid) {
+  for (var i = 0; i < ACCOUNTS.length; i++) {
+    if (ACCOUNTS[i].sid === sid) return ACCOUNTS[i];
+  }
+  return null;
+}
+
+function profileOf(sid) {
+  return (DB.profiles && DB.profiles[sid]) || null;
+}
+
+function profileName(sid) {
+  var prof = profileOf(sid);
+  return prof && prof.name ? prof.name : '';
+}
+
 var AUTH = {
   step: 'sid',
   sid: '',
@@ -4117,6 +4285,8 @@ function findSeededName(sid) {
 }
 
 function defaultName(sid) {
+  var account = findAccount(sid);
+  if (account) return profileName(sid) || account.name;
   return findSeededName(sid) || ('同学' + sid.slice(-4));
 }
 
@@ -4186,8 +4356,8 @@ var AUTH_VIEW = {
         '<label><input id="loginRemember" type="checkbox"' + (AUTH.remember ? ' checked' : '') + '> 记住学号（不记密码）</label>' +
         '<a href="javascript:void 0" data-act="auth-forgot">忘记密码？</a>' +
       '</div>' +
-      '<div class="auth-hint">演示环境：任意 6 位以上字符均可通过。<br>' +
-        '<a href="javascript:void 0" data-act="auth-forcefail">模拟认证失败 →</a></div>' +
+      '<div class="auth-hint">演示密码 <b>campus2026</b><br>' +
+        '连续输错 3 次会转入安全校验</div>' +
     '</div>';
   },
 
@@ -4238,7 +4408,7 @@ function authFootHtml() {
     sid: '继 续',
     pwd: '验证并登录',
     code: '提交校验',
-    done: '进入校园信息港'
+    done: '进入 CampusLoop'
   }[AUTH.step];
 
   return '<div class="auth-foot">' + back +
@@ -4329,6 +4499,31 @@ function authNext() {
       return;
     }
 
+    var account = findAccount(AUTH.sid);
+    if (!account) {
+      err.textContent = '该学号未开通统一身份认证，请核对后重试';
+      $('#loginPwd').select();
+      return;
+    }
+
+    if (pwd !== DEMO_PASSWORD) {
+      AUTH.fails += 1;
+
+      if (AUTH.fails >= 3) {
+        AUTH.fails = 0;
+        AUTH.needCode = true;
+        AUTH.step = 'code';
+        renderAuth();
+        toast('密码连续错误，已转入安全校验', 'err');
+        return;
+      }
+
+      err.textContent = '密码不正确，还可尝试 ' + (3 - AUTH.fails) + ' 次';
+      $('#loginPwd').select();
+      return;
+    }
+
+    AUTH.name = profileName(account.sid) || account.name;
     AUTH.remember = $('#loginRemember').checked;
     AUTH.step = 'done';
     renderAuth();
@@ -4354,8 +4549,11 @@ function authNext() {
     }
 
     AUTH.needCode = false;
-    AUTH.step = 'done';
+    AUTH.fails = 0;
+    AUTH.step = 'pwd';
     renderAuth();
+    var codeOk = $('#loginErr');
+    if (codeOk) codeOk.textContent = '人机校验通过，请重新输入密码';
     toast('校验通过');
     return;
   }
@@ -4380,10 +4578,19 @@ function finishLogin() {
 }
 
 function fillDemoAccount() {
-  AUTH.sid = '2023013872';
-  AUTH.step = 'sid';
+  var account = ACCOUNTS[0];
+
+  AUTH.sid = account.sid;
+  AUTH.name = profileName(account.sid) || account.name;
+  AUTH.fails = 0;
+  AUTH.needCode = false;
+  AUTH.step = 'pwd';
   renderAuth();
-  toast('已填入演示账号，密码随便填 6 位以上');
+
+  var input = $('#loginPwd');
+  if (input) input.value = DEMO_PASSWORD;
+
+  toast('已填入演示账号与密码，直接点「验证并登录」');
 }
 
 function togglePwdVisible() {
@@ -4391,22 +4598,6 @@ function togglePwdVisible() {
   if (!input) return;
   input.type = input.type === 'password' ? 'text' : 'password';
   input.focus();
-}
-
-function simulateAuthFail() {
-  AUTH.fails += 1;
-
-  if (AUTH.fails >= 2) {
-    AUTH.fails = 0;
-    AUTH.needCode = true;
-    AUTH.step = 'code';
-    renderAuth();
-    toast('连续失败，已转入安全校验', 'err');
-    return;
-  }
-
-  var err = $('#loginErr');
-  if (err) err.textContent = '认证失败：账号或密码不正确（还可尝试 1 次）';
 }
 
 function drawCaptcha() {
@@ -4653,6 +4844,14 @@ function bindEvents() {
         renderProfile();
         break;
 
+      case 'profile-edit':
+        openProfileEditor();
+        break;
+
+      case 'profile-save':
+        saveProfile();
+        break;
+
       case 'detail-img':
         var index = Number(el.dataset.index);
         state.detailImageIndex = index;
@@ -4724,10 +4923,6 @@ function bindEvents() {
 
       case 'auth-forgot':
         toast('校内网环境下请联系信息中心重置密码', 'err');
-        break;
-
-      case 'auth-forcefail':
-        simulateAuthFail();
         break;
 
       case 'auth-captcha-reload':
@@ -4825,7 +5020,7 @@ function bindEvents() {
   $('#aboutBtn').addEventListener('click', function () {
     confirmDialog({
       icon: 'info',
-      title: 'CampusLoop · 校园信息港',
+      title: 'CampusLoop',
       text: '课程实践项目，纯前端实现。失物招领、二手交易、留言墙三合一，数据保存在浏览器本地，不会上传到服务器。'
     });
   });
