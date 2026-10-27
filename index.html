@@ -355,7 +355,7 @@ select.field { cursor: pointer; }
 .login-row a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule); }
 .login-row a:hover { color: var(--accent); border-color: var(--accent); }
 
-.login-err { font-size: 12px; color: var(--accent); min-height: 16px; }
+.login-err { font-size: 12px; color: var(--accent); min-height: 16px; margin: 7px 0 3px; }
 
 .login-note {
   margin-top: 24px;
@@ -390,6 +390,17 @@ select.field { cursor: pointer; }
 .auth-step.done { color: var(--ink-3); border-top-color: var(--ink-3); cursor: pointer; }
 .auth-step.done:hover { color: var(--ink); border-top-color: var(--ink); }
 
+/* 入口页的说明线：与步骤条同样高度，切换时不跳 */
+.auth-steps-hint {
+  display: flex;
+  align-items: center;
+  border-top: 2px solid var(--ink);
+  padding: 11px 0 0;
+  font-size: 10.5px;
+  letter-spacing: .16em;
+  color: var(--ink-3);
+}
+
 .auth-body { margin-top: 26px; }
 .auth-pane { animation: authIn .3s var(--ease); }
 @keyframes authIn {
@@ -416,13 +427,71 @@ select.field { cursor: pointer; }
 .auth-probe .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); flex: none; }
 .auth-probe.is-run .dot { background: var(--accent); animation: pulseDot 1s infinite; }
 .auth-probe.is-ok .dot { background: #2F6B4F; }
+.auth-probe.is-warn { border-color: rgba(179, 67, 43, .35); color: var(--accent); }
+.auth-probe.is-warn .dot { background: var(--accent); }
 @keyframes pulseDot { 50% { opacity: .2; } }
+
+/* 入口选择：两个并列按钮 */
+.auth-choices { display: grid; gap: 12px; }
+.auth-choice {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px solid var(--rule);
+  padding: 15px 14px;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color .2s var(--ease), transform .2s var(--ease), background .2s;
+}
+.auth-choice:hover {
+  border-color: var(--ink);
+  background: var(--paper-2);
+  transform: translateX(2px);
+}
+.auth-choice .ic {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+.auth-choice:hover .ic { border-color: var(--ink); color: var(--ink); }
+.auth-choice .tx { flex: 1; min-width: 0; }
+.auth-choice .tx b {
+  display: block;
+  font-family: var(--serif);
+  font-size: 14.5px;
+  font-weight: 400;
+  letter-spacing: .02em;
+}
+.auth-choice .tx span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.auth-choice .ar { color: var(--ink-4); flex: none; transition: color .2s, transform .2s; }
+.auth-choice:hover .ar { color: var(--accent); transform: translateX(3px); }
+
+.auth-reg { display: grid; gap: 14px; }
+.auth-reg .login-field label { font-size: 11px; }
+.auth-reg-foot { margin-top: 2px; font-size: 11px; color: var(--ink-4); letter-spacing: .02em; }
 
 .auth-demo { margin-top: 16px; font-size: 11.5px; }
 .auth-demo a { color: var(--accent); font-weight: 600; text-decoration: none; border-bottom: 1px solid currentColor; }
 
 .pwd-wrap { position: relative; display: flex; align-items: center; }
 .pwd-wrap input { padding-right: 34px; }
+/* 自绘了显隐按钮，关掉 Edge 自带的密码揭示图标，避免两个图标并排 */
+.pwd-wrap input::-ms-reveal,
+.pwd-wrap input::-ms-clear { display: none; width: 0; height: 0; }
 .pwd-eye {
   position: absolute;
   right: 0;
@@ -2684,7 +2753,10 @@ function seedData() {
     favs: {},
 
     /** 个人资料（按学号存）：昵称 / 院系 / 联系方式 / 简介 由用户自己维护 */
-    profiles: {}
+    profiles: {},
+
+    /** 本站自行注册的账号（按学号存）：昵称 + 密码散列，与学校统一认证的账号互不干扰 */
+    accounts: {}
   };
 }
 
@@ -2722,6 +2794,7 @@ function initDB() {
   }
   if (!DB.favs) DB.favs = {};
   if (!DB.profiles) DB.profiles = {};
+  if (!DB.accounts) DB.accounts = {};
   if (!Array.isArray(DB.lost)) DB.lost = [];
   if (!Array.isArray(DB.market)) DB.market = [];
   if (!Array.isArray(DB.wall)) DB.wall = [];
@@ -4233,6 +4306,58 @@ function findAccount(sid) {
   return null;
 }
 
+/* ---------- 本站注册账号 ---------- */
+
+function getLocalAccount(sid) {
+  return (DB.accounts && DB.accounts[sid]) || null;
+}
+
+/* 简易散列：只为避免明文密码写进 localStorage，不是密码学哈希，演示够用 */
+function hashPwd(pwd) {
+  var s = 'campusloop:' + pwd;
+  var h1 = 0x811c9dc5;
+  var h2 = 0x9e3779b9;
+
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charCodeAt(i);
+    h1 = ((h1 ^ c) * 16777619) >>> 0;
+    h2 = (((h2 << 5) >>> 0) - h2 + c * (i + 1)) >>> 0;
+  }
+
+  return pad8(h1) + pad8(h2);
+}
+
+function pad8(n) {
+  var hex = n.toString(16);
+  while (hex.length < 8) hex = '0' + hex;
+  return hex;
+}
+
+function createLocalAccount(sid, name, pwd) {
+  DB.accounts[sid] = {
+    sid: sid,
+    name: name,
+    pwdHash: hashPwd(pwd),
+    createdAt: Date.now()
+  };
+
+  /* 注册即建档，个人中心可以直接编辑院系、联系方式 */
+  if (!DB.profiles[sid]) {
+    DB.profiles[sid] = { name: name, dept: '', contact: '', bio: '' };
+  } else {
+    DB.profiles[sid].name = name;
+  }
+
+  saveDB();
+}
+
+/* 该学号是否已被占用（学校统一认证 / 本站注册） */
+function sidTaken(sid) {
+  if (findAccount(sid)) return 'school';
+  if (getLocalAccount(sid)) return 'local';
+  return null;
+}
+
 function profileOf(sid) {
   return (DB.profiles && DB.profiles[sid]) || null;
 }
@@ -4243,7 +4368,8 @@ function profileName(sid) {
 }
 
 var AUTH = {
-  step: 'sid',
+  mode: 'choose',      /* choose 选择入口 | school 统一认证 | register 本站注册 */
+  step: 'mode',
   sid: '',
   name: '',
   fails: 0,
@@ -4254,15 +4380,24 @@ var AUTH = {
 };
 
 var AUTH_META = {
+  mode: { idx: '入口', title: '选择进入方式', sub: '用学校统一身份认证登录，或直接注册一个本站账号' },
   sid:  { idx: '身份', title: '核验身份', sub: '先确认学号归属，再进入统一身份认证' },
   pwd:  { idx: '密码', title: '验证密码', sub: '密码在本机加密后提交，本站不保存明文' },
   code: { idx: '校验', title: '安全校验', sub: '检测到连续失败的尝试，需要完成一次人机校验' },
+  reg:  { idx: '注册', title: '创建账号', sub: '填写学号、昵称与密码，账号保存在本机浏览器' },
   done: { idx: '完成', title: '还差一步', sub: '确认昵称与提醒设置，就可以进站了' }
 };
 
 function authSeq() {
-  var seq = ['sid', 'pwd'];
-  if (AUTH.needCode) seq.push('code');
+  if (AUTH.step === 'mode') return ['mode'];
+
+  var seq = ['mode'];
+  if (AUTH.mode === 'register') {
+    seq.push('reg');
+  } else {
+    seq.push('sid', 'pwd');
+    if (AUTH.needCode) seq.push('code');
+  }
   seq.push('done');
   return seq;
 }
@@ -4287,6 +4422,10 @@ function findSeededName(sid) {
 function defaultName(sid) {
   var account = findAccount(sid);
   if (account) return profileName(sid) || account.name;
+
+  var local = getLocalAccount(sid);
+  if (local) return local.name;
+
   return findSeededName(sid) || ('同学' + sid.slice(-4));
 }
 
@@ -4315,12 +4454,75 @@ function authProbeSync() {
 
   probeTimer = setTimeout(function () {
     if (!$('#authProbeText')) return;
+
+    if (!findAccount(AUTH.sid) && !getLocalAccount(AUTH.sid)) {
+      box.className = 'auth-probe is-warn';
+      text.textContent = '未查询到该学号的认证记录';
+      return;
+    }
+
     box.className = 'auth-probe is-ok';
     text.textContent = '已连接 · 认证节点 18 ms · ' + sidGrade(AUTH.sid);
   }, 620);
 }
 
 var AUTH_VIEW = {
+
+  mode: function () {
+    return '<div class="auth-pane">' +
+      '<div class="auth-choices">' +
+        '<button type="button" class="auth-choice" data-act="auth-mode" data-mode="register">' +
+          '<span class="ic">' + icon('user', 16) + '</span>' +
+          '<span class="tx"><b>注册新账号</b>' +
+            '<span>用学号在本站自建一个账号</span></span>' +
+          '<span class="ar">' + icon('arrow', 15) + '</span>' +
+        '</button>' +
+        '<button type="button" class="auth-choice" data-act="auth-mode" data-mode="school">' +
+          '<span class="ic">' + icon('key', 16) + '</span>' +
+          '<span class="tx"><b>统一身份认证</b>' +
+            '<span>学校账号与本站账号都从这里进</span></span>' +
+          '<span class="ar">' + icon('arrow', 15) + '</span>' +
+        '</button>' +
+      '</div>' +
+      '<div class="auth-hint">注册的账号只保存在这台设备的浏览器里。' +
+        '想直接体验，可用演示学号 <b>' + ACCOUNTS[0].sid + '</b> 走统一认证。</div>' +
+    '</div>';
+  },
+
+  reg: function () {
+    return '<div class="auth-pane">' +
+      '<div class="auth-reg">' +
+        '<div class="login-field">' +
+          '<label for="regSid">学号</label>' +
+          '<input id="regSid" type="text" inputmode="numeric" maxlength="10" autocomplete="username" ' +
+            'placeholder="10 位数字，前四位为入学年份">' +
+        '</div>' +
+        '<div class="login-field">' +
+          '<label for="regName">昵称</label>' +
+          '<input id="regName" type="text" maxlength="12" autocomplete="nickname" ' +
+            'placeholder="2–12 字，站内展示用">' +
+        '</div>' +
+        '<div class="login-field">' +
+          '<label for="regPwd">设置密码</label>' +
+          '<div class="pwd-wrap">' +
+            '<input id="regPwd" type="password" autocomplete="new-password" placeholder="6–20 位">' +
+            '<button class="pwd-eye" type="button" data-act="auth-eye" data-for="regPwd" aria-label="显示密码">' +
+              icon('eye', 15) + '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="login-field">' +
+          '<label for="regPwd2">确认密码</label>' +
+          '<div class="pwd-wrap">' +
+            '<input id="regPwd2" type="password" autocomplete="new-password" placeholder="再输入一次">' +
+            '<button class="pwd-eye" type="button" data-act="auth-eye" data-for="regPwd2" aria-label="显示密码">' +
+              icon('eye', 15) + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="login-err" id="loginErr"></div>' +
+      '<div class="auth-hint">账号与密码只存在本机浏览器，清除站点数据会一并删除。</div>' +
+    '</div>';
+  },
 
   sid: function () {
     return '<div class="auth-pane">' +
@@ -4339,14 +4541,24 @@ var AUTH_VIEW = {
   },
 
   pwd: function () {
+    var isLocal = !!getLocalAccount(AUTH.sid);
+
+    var label = isLocal ? '本站账号密码' : '统一身份认证密码';
+    var hint = isLocal
+      ? '这是你在这台设备注册的账号，请输入注册时设置的密码。<br>连续输错 3 次会转入安全校验'
+      : '演示密码 <b>' + DEMO_PASSWORD + '</b> · ' +
+        '<a href="javascript:void 0" data-act="auth-fillpwd">点此填入</a><br>' +
+        '连续输错 3 次会转入安全校验';
+
     return '<div class="auth-pane">' +
       '<div class="auth-id">' + avatarOf(AUTH.name, 34, 15) +
         '<div class="who"><b>' + escapeHtml(AUTH.name) + '</b>' +
-        '<span>学号 ' + escapeHtml(AUTH.sid) + ' · ' + sidGrade(AUTH.sid) + '</span></div>' +
+        '<span>学号 ' + escapeHtml(AUTH.sid) + ' · ' +
+          (isLocal ? '本站注册账号' : sidGrade(AUTH.sid)) + '</span></div>' +
         '<button type="button" data-act="auth-goto" data-step="sid">更换</button>' +
       '</div>' +
       '<div class="login-field">' +
-        '<label for="loginPwd">统一身份认证密码</label>' +
+        '<label for="loginPwd">' + label + '</label>' +
         '<div class="pwd-wrap">' +
           '<input id="loginPwd" type="password" autocomplete="current-password" placeholder="请输入密码">' +
           '<button class="pwd-eye" type="button" data-act="auth-eye" aria-label="显示密码">' + icon('eye', 15) + '</button>' +
@@ -4357,9 +4569,7 @@ var AUTH_VIEW = {
         '<label><input id="loginRemember" type="checkbox"' + (AUTH.remember ? ' checked' : '') + '> 记住学号（不记密码）</label>' +
         '<a href="javascript:void 0" data-act="auth-forgot">忘记密码？</a>' +
       '</div>' +
-      '<div class="auth-hint">演示密码 <b>' + DEMO_PASSWORD + '</b> · ' +
-        '<a href="javascript:void 0" data-act="auth-fillpwd">点此填入</a><br>' +
-        '连续输错 3 次会转入安全校验</div>' +
+      '<div class="auth-hint">' + hint + '</div>' +
     '</div>';
   },
 
@@ -4380,11 +4590,12 @@ var AUTH_VIEW = {
   },
 
   done: function () {
+    var tag = AUTH.mode === 'register' ? '已创建' : '已认证';
     return '<div class="auth-pane">' +
       '<div class="auth-id">' + avatarOf(AUTH.name, 34, 15) +
         '<div class="who"><b>' + escapeHtml(AUTH.name) + '</b>' +
         '<span>学号 ' + escapeHtml(AUTH.sid) + ' · ' + sidGrade(AUTH.sid) + '</span></div>' +
-        '<span class="pass">' + icon('check', 12) + ' 已认证</span>' +
+        '<span class="pass">' + icon('check', 12) + ' ' + tag + '</span>' +
       '</div>' +
       '<div class="login-field">' +
         '<label for="authNick">显示昵称</label>' +
@@ -4399,6 +4610,9 @@ var AUTH_VIEW = {
 };
 
 function authFootHtml() {
+  /* 入口选择页的两个卡片本身就是动作，不需要底部按钮 */
+  if (AUTH.step === 'mode') return '';
+
   var seq = authSeq();
   var pos = seq.indexOf(AUTH.step);
 
@@ -4410,6 +4624,7 @@ function authFootHtml() {
     sid: '继 续',
     pwd: '验证并登录',
     code: '提交校验',
+    reg: '创建账号并进入',
     done: '进入 CampusLoop'
   }[AUTH.step];
 
@@ -4422,14 +4637,22 @@ function renderAuth() {
   var seq = authSeq();
   var pos = seq.indexOf(AUTH.step);
 
-  $('#authSteps').innerHTML = seq.map(function (key, i) {
-    var cls = i === pos ? ' on' : (i < pos ? ' done' : '');
-    var attr = i < pos
-      ? ' data-act="auth-goto" data-step="' + key + '"'
-      : ' disabled';
-    return '<button type="button" class="auth-step' + cls + '"' + attr + '>' +
-      '<span class="idx">0' + (i + 1) + '</span>' + AUTH_META[key].idx + '</button>';
-  }).join('');
+  /* 入口页只有一步，用等高的说明线占位，避免切步时卡片上下跳动 */
+  var stepsBox = $('#authSteps');
+  if (AUTH.step === 'mode') {
+    stepsBox.className = 'auth-steps auth-steps-hint';
+    stepsBox.innerHTML = '<span>CAMPUSLOOP · 身份入口</span>';
+  } else {
+    stepsBox.className = 'auth-steps';
+    stepsBox.innerHTML = seq.map(function (key, i) {
+      var cls = i === pos ? ' on' : (i < pos ? ' done' : '');
+      var attr = i < pos
+        ? ' data-act="auth-goto" data-step="' + key + '"'
+        : ' disabled';
+      return '<button type="button" class="auth-step' + cls + '"' + attr + '>' +
+        '<span class="idx">0' + (i + 1) + '</span>' + AUTH_META[key].idx + '</button>';
+    }).join('');
+  }
 
   $('#authTitle').textContent = AUTH_META[AUTH.step].title;
   $('#authSub').textContent = AUTH_META[AUTH.step].sub;
@@ -4453,6 +4676,80 @@ function authBack() {
 
 function authNext() {
   var hint, err;
+
+  /* 入口选择页没有主按钮，走到这里说明是误触 */
+  if (AUTH.step === 'mode') return;
+
+  if (AUTH.step === 'reg') {
+    var regSid = $('#regSid').value.replace(/\D/g, '');
+    var regName = $('#regName').value.trim();
+    var regPwd = normalizePwd($('#regPwd').value);
+    var regPwd2 = normalizePwd($('#regPwd2').value);
+    err = $('#loginErr');
+
+    if (!regSid) {
+      err.textContent = '请填写学号';
+      $('#regSid').focus();
+      return;
+    }
+    if (regSid.length !== 10) {
+      err.textContent = '学号应为 10 位，当前 ' + regSid.length + ' 位';
+      $('#regSid').focus();
+      return;
+    }
+    if (!/^20\d{2}$/.test(regSid.slice(0, 4))) {
+      err.textContent = '前四位应为入学年份，请核对后再试';
+      $('#regSid').focus();
+      return;
+    }
+
+    var taken = sidTaken(regSid);
+    if (taken === 'school') {
+      err.textContent = '该学号已开通统一身份认证，请返回上一步改用「统一身份认证」登录';
+      return;
+    }
+    if (taken === 'local') {
+      err.textContent = '该学号已注册过，请返回上一步用「统一身份认证」输入这个账号的密码登录';
+      return;
+    }
+
+    if (regName.length < 2) {
+      err.textContent = '昵称至少 2 个字';
+      $('#regName').focus();
+      return;
+    }
+    if (regName.length > 12) {
+      err.textContent = '昵称最多 12 个字';
+      $('#regName').focus();
+      return;
+    }
+    if (regPwd.length < 6) {
+      err.textContent = '密码至少 6 位';
+      $('#regPwd').focus();
+      return;
+    }
+    if (regPwd.length > 20) {
+      err.textContent = '密码最多 20 位';
+      $('#regPwd').focus();
+      return;
+    }
+    if (regPwd !== regPwd2) {
+      err.textContent = '两次输入的密码不一致，请重新确认';
+      $('#regPwd2').select();
+      return;
+    }
+
+    createLocalAccount(regSid, regName, regPwd);
+
+    AUTH.sid = regSid;
+    AUTH.name = regName;
+    AUTH.fails = 0;
+    AUTH.remember = true;
+    AUTH.step = 'done';
+    renderAuth();
+    toast('账号已创建');
+    return;
+  }
 
   if (AUTH.step === 'sid') {
     var sid = $('#loginSid').value.trim();
@@ -4480,6 +4777,15 @@ function authNext() {
     }
 
     AUTH.sid = sid;
+
+    /* 学号必须已有认证记录，否则不让进密码步——真实认证系统也是这个行为 */
+    if (!findAccount(sid) && !getLocalAccount(sid)) {
+      hint.className = 'auth-hint is-err';
+      hint.innerHTML = '该学号没有认证记录。如果这是你自己的学号，可以 ' +
+        '<a href="javascript:void 0" data-act="auth-mode" data-mode="register">改用注册 →</a>';
+      return;
+    }
+
     AUTH.name = defaultName(sid);
     AUTH.step = 'pwd';
     renderAuth();
@@ -4504,13 +4810,20 @@ function authNext() {
     }
 
     var account = findAccount(AUTH.sid);
-    if (!account) {
-      err.textContent = '该学号不在演示名单内，可用学号 ' + ACCOUNTS[0].sid;
+    var local = getLocalAccount(AUTH.sid);
+
+    if (!account && !local) {
+      err.textContent = '该学号未开通统一身份认证。如果是你自己的学号，请返回上一步选择「注册新账号」';
       $('#loginPwd').select();
       return;
     }
 
-    if (pwd !== DEMO_PASSWORD) {
+    /* 本站注册的账号比对本机散列，统一认证账号比对演示密码 */
+    var passed = local
+      ? hashPwd(pwd) === local.pwdHash
+      : pwd === DEMO_PASSWORD;
+
+    if (!passed) {
       AUTH.fails += 1;
 
       if (AUTH.fails >= 3) {
@@ -4524,12 +4837,13 @@ function authNext() {
 
       err.textContent = '密码不正确，还可尝试 ' + (3 - AUTH.fails) + ' 次' +
         (fixed ? '（已自动去掉空格 / 全角字符）' : '') +
-        '，演示密码 ' + DEMO_PASSWORD;
+        (local ? '' : '，演示密码 ' + DEMO_PASSWORD);
       $('#loginPwd').select();
       return;
     }
 
-    AUTH.name = profileName(account.sid) || account.name;
+    AUTH.name = profileName(account ? account.sid : AUTH.sid) ||
+      (account ? account.name : local.name);
     AUTH.remember = $('#loginRemember').checked;
     AUTH.step = 'done';
     renderAuth();
@@ -4573,6 +4887,16 @@ function authNext() {
 
 function finishLogin() {
   var user = { name: AUTH.name, sid: AUTH.sid, color: avatarColor(AUTH.sid) };
+
+  /* done 步可能改过昵称，写回档案，免得下次登录又变回注册时的名字 */
+  if (!DB.profiles[AUTH.sid]) {
+    DB.profiles[AUTH.sid] = { name: AUTH.name, dept: '', contact: '', bio: '' };
+  } else {
+    DB.profiles[AUTH.sid].name = AUTH.name;
+  }
+
+  var local = getLocalAccount(AUTH.sid);
+  if (local) local.name = AUTH.name;
 
   sessionUser = user;
   DB.user = AUTH.remember ? user : null;
@@ -4618,10 +4942,13 @@ function fillDemoPassword() {
   if (err) err.textContent = '';
 }
 
-function togglePwdVisible() {
-  var input = $('#loginPwd');
+function togglePwdVisible(targetId) {
+  var input = document.getElementById(targetId || 'loginPwd');
   if (!input) return;
+
+  var btn = document.querySelector('[data-act="auth-eye"][data-for="' + (targetId || '') + '"]');
   input.type = input.type === 'password' ? 'text' : 'password';
+  if (btn) btn.setAttribute('aria-label', input.type === 'password' ? '显示密码' : '隐藏密码');
   input.focus();
 }
 
@@ -4689,6 +5016,13 @@ function onAuthInput(event) {
     authProbeSync();
   }
 
+  if (target.id === 'regSid') {
+    target.value = target.value.replace(/\D/g, '').slice(0, 10);
+
+    var regErr = $('#loginErr');
+    if (regErr) regErr.textContent = '';
+  }
+
   if (target.id === 'authNick') {
     AUTH.name = target.value.trim() || AUTH.name;
   }
@@ -4717,7 +5051,8 @@ function showLogin() {
   $('#loginView').classList.remove('hidden');
 
   AUTH = {
-    step: 'sid',
+    mode: 'choose',
+    step: 'mode',
     sid: '',
     name: '',
     fails: 0,
@@ -4928,7 +5263,25 @@ function bindEvents() {
         authBack();
         break;
 
+      case 'auth-mode':
+        AUTH.mode = el.dataset.mode;
+        AUTH.step = AUTH.mode === 'register' ? 'reg' : 'sid';
+        AUTH.sid = '';
+        AUTH.name = '';
+        AUTH.fails = 0;
+        AUTH.needCode = false;
+        AUTH.captcha = '';
+        renderAuth();
+        break;
+
       case 'auth-goto':
+        if (el.dataset.step === 'mode') {
+          /* 退回入口页时把两种模式的状态都清空，避免串号 */
+          AUTH.fails = 0;
+          AUTH.needCode = false;
+          AUTH.captcha = '';
+          AUTH.mode = 'choose';
+        }
         if (el.dataset.step === 'sid') {
           AUTH.fails = 0;
           AUTH.needCode = false;
@@ -4947,11 +5300,15 @@ function bindEvents() {
         break;
 
       case 'auth-eye':
-        togglePwdVisible();
+        togglePwdVisible(el.dataset.for);
         break;
 
       case 'auth-forgot':
-        toast('校内网环境下请联系信息中心重置密码', 'err');
+        if (getLocalAccount(AUTH.sid)) {
+          toast('本站注册的账号没有找回通道，可换一个学号重新注册', 'err');
+        } else {
+          toast('校内网环境下请联系信息中心重置密码', 'err');
+        }
         break;
 
       case 'auth-captcha-reload':
