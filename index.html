@@ -4332,7 +4332,8 @@ var AUTH_VIEW = {
       '<div class="auth-hint" id="authHint">' + sidHintText(AUTH.sid) + '</div>' +
       '<div class="auth-probe"><span class="dot"></span><span id="authProbeText">认证节点 · 未连接</span></div>' +
       '<div class="auth-demo">' +
-        '<a href="javascript:void 0" id="quickFill" data-act="auth-demo">一键填入演示账号 →</a>' +
+        '演示学号 <b>' + ACCOUNTS[0].sid + '</b> · ' +
+        '<a href="javascript:void 0" id="quickFill" data-act="auth-demo">一键填入 →</a>' +
       '</div>' +
     '</div>';
   },
@@ -4356,7 +4357,8 @@ var AUTH_VIEW = {
         '<label><input id="loginRemember" type="checkbox"' + (AUTH.remember ? ' checked' : '') + '> 记住学号（不记密码）</label>' +
         '<a href="javascript:void 0" data-act="auth-forgot">忘记密码？</a>' +
       '</div>' +
-      '<div class="auth-hint">演示密码 <b>campus2026</b><br>' +
+      '<div class="auth-hint">演示密码 <b>' + DEMO_PASSWORD + '</b> · ' +
+        '<a href="javascript:void 0" data-act="auth-fillpwd">点此填入</a><br>' +
         '连续输错 3 次会转入安全校验</div>' +
     '</div>';
   },
@@ -4485,7 +4487,9 @@ function authNext() {
   }
 
   if (AUTH.step === 'pwd') {
-    var pwd = $('#loginPwd').value;
+    var raw = $('#loginPwd').value;
+    var pwd = normalizePwd(raw);
+    var fixed = raw !== pwd;
     err = $('#loginErr');
 
     if (!pwd) {
@@ -4501,7 +4505,7 @@ function authNext() {
 
     var account = findAccount(AUTH.sid);
     if (!account) {
-      err.textContent = '该学号未开通统一身份认证，请核对后重试';
+      err.textContent = '该学号不在演示名单内，可用学号 ' + ACCOUNTS[0].sid;
       $('#loginPwd').select();
       return;
     }
@@ -4518,7 +4522,9 @@ function authNext() {
         return;
       }
 
-      err.textContent = '密码不正确，还可尝试 ' + (3 - AUTH.fails) + ' 次';
+      err.textContent = '密码不正确，还可尝试 ' + (3 - AUTH.fails) + ' 次' +
+        (fixed ? '（已自动去掉空格 / 全角字符）' : '') +
+        '，演示密码 ' + DEMO_PASSWORD;
       $('#loginPwd').select();
       return;
     }
@@ -4591,6 +4597,25 @@ function fillDemoAccount() {
   if (input) input.value = DEMO_PASSWORD;
 
   toast('已填入演示账号与密码，直接点「验证并登录」');
+}
+
+function normalizePwd(raw) {
+  /* 中文输入法下容易打出全角字符，复制粘贴也常带空格——统一转成半角并去掉首尾空白 */
+  return String(raw || '')
+    .replace(/[\uff01-\uff5e]/g, function (ch) {
+      return String.fromCharCode(ch.charCodeAt(0) - 0xfee0);
+    })
+    .replace(/\u3000/g, ' ')
+    .trim();
+}
+
+function fillDemoPassword() {
+  var input = $('#loginPwd');
+  if (!input) return;
+  input.value = DEMO_PASSWORD;
+  input.focus();
+  var err = $('#loginErr');
+  if (err) err.textContent = '';
 }
 
 function togglePwdVisible() {
@@ -4915,6 +4940,10 @@ function bindEvents() {
 
       case 'auth-demo':
         fillDemoAccount();
+        break;
+
+      case 'auth-fillpwd':
+        fillDemoPassword();
         break;
 
       case 'auth-eye':
