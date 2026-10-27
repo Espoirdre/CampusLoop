@@ -1,4 +1,4 @@
-# 校园信息港 · Campus Hub
+# CampusLoop · 校园信息港
 
 > VibeCoding 实战 · 小组作业
 > 一个纯前端的校园信息互助平台：**失物招领 / 二手市场 / 留言墙** 三合一。
@@ -82,7 +82,7 @@ npx serve .
 然后访问 `http://localhost:8000`。
 
 > 两种方式都能正常使用，数据存在浏览器的 `localStorage` 里，不会上传到任何服务器。
-> 想清空数据重新开始：浏览器控制台执行 `localStorage.removeItem('campus_hub_v2')` 后刷新。
+> 想清空数据重新开始：浏览器控制台执行 `localStorage.removeItem('campusloop_v1')` 后刷新。
 
 ---
 
@@ -92,7 +92,7 @@ npx serve .
 
 | 关注点 | 做法 |
 | --- | --- |
-| 数据存储 | `localStorage`，key 为 `campus_hub_v2`，带版本号 |
+| 数据存储 | `localStorage`，key 为 `campusloop_v1`，带版本号 |
 | 数据层封装 | 所有读写集中在 `Store.read / Store.write`，换成云端接口只需改这两个方法 |
 | 页面切换 | 单页应用，五个 view 节点切换显隐，无路由库 |
 | 事件绑定 | document 事件委托 + `data-act` 属性分发，避免动态渲染后重复绑事件 |

@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>校园信息港 · 失物招领 | 二手市场 | 留言墙</title>
+<title>CampusLoop · 校园信息港 — 失物招领 / 二手市场 / 留言墙</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231B1712'/%3E%3Ctext x='50' y='73' font-size='56' text-anchor='middle' fill='%23F5F0E6' font-family='Georgia,serif'%3E%E6%A0%A1%3C/text%3E%3C/svg%3E">
 <style>
 /* =========================================================
-   校园信息港 · 编辑杂志风
+   CampusLoop · 校园信息港 · 编辑杂志风
    设计基调：纸感米白 / 衬线大标题 / 细线分隔 / 朱红点缀
    ========================================================= */
 
@@ -1852,7 +1852,7 @@ select.field { cursor: pointer; }
       <div class="login-fact"><span class="n">03</span>留言墙上，说说今天的心情</div>
     </div>
 
-    <div class="login-foot">EST. 2026 · CAMPUS HUB</div>
+    <div class="login-foot">EST. 2026 · CAMPUSLOOP</div>
   </div>
 
   <div class="login-right">
@@ -1900,7 +1900,7 @@ select.field { cursor: pointer; }
     <div class="topbar-inner">
       <div class="wordmark" data-view="home">
         <span class="zh">校园信息港</span>
-        <span class="en">CAMPUS HUB</span>
+        <span class="en">CAMPUSLOOP</span>
       </div>
 
       <nav class="nav" id="nav">
@@ -1952,7 +1952,7 @@ select.field { cursor: pointer; }
         <button data-view="wall">留言墙</button>
         <button id="aboutBtn">关于本站</button>
       </div>
-      <div class="copy">© 2026 <b>校园信息港 Campus Hub</b> · 课程实践项目 · 数据保存在本地浏览器</div>
+      <div class="copy">© 2026 <b>CampusLoop · 校园信息港</b> · 课程实践项目 · 数据保存在本地浏览器</div>
     </div>
   </footer>
 
@@ -2023,7 +2023,7 @@ select.field { cursor: pointer; }
 
 <script>
 /* =========================================================================
-   校园信息港 Campus Hub
+   CampusLoop · 校园信息港
    纯前端实现 · 数据保存在 localStorage
    -------------------------------------------------------------------------
    所有读写都集中在 Store 对象里。日后升级云端数据库，
@@ -2186,8 +2186,8 @@ function confirmDialog(options) {
 /* =========================================================
    三、数据层（预留云端升级）
    ========================================================= */
-var STORAGE_KEY = 'campus_hub_v2';
-var DB_VERSION = 2;
+var STORAGE_KEY = 'campusloop_v1';
+var DB_VERSION = 1;
 var memoryStore = null;
 
 var Store = {
@@ -4274,7 +4274,7 @@ function bindEvents() {
   $('#aboutBtn').addEventListener('click', function () {
     confirmDialog({
       icon: 'info',
-      title: '校园信息港 Campus Hub',
+      title: 'CampusLoop · 校园信息港',
       text: '课程实践项目，纯前端实现。失物招领、二手交易、留言墙三合一，数据保存在浏览器本地，不会上传到服务器。'
     });
   });
