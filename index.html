@@ -206,6 +206,20 @@ select.field { cursor: pointer; }
 }
 .searchline button:hover { color: var(--accent-2); }
 
+/* 键盘提示：按 / 直接跳到搜索框 */
+.search-kbd {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-4);
+  transition: opacity .18s;
+}
+.searchline input:focus ~ .search-kbd { opacity: 0; }
+
 /* =========================================================
    5. 头像
    ========================================================= */
@@ -1313,6 +1327,21 @@ select.field { cursor: pointer; }
 }
 .resultline b { font-family: var(--serif); font-size: 14px; color: var(--ink); font-weight: 400; }
 
+/* 列表分页 */
+.load-more { margin: 30px 0 8px; text-align: center; }
+.load-more-btn { padding: 11px 30px; letter-spacing: .06em; }
+.load-more-btn:hover { border-color: var(--ink); background: var(--paper-2); }
+.load-more-tip {
+  margin-top: 11px;
+  font-size: 11px;
+  color: var(--ink-4);
+  letter-spacing: .04em;
+}
+
+/* 图片异步加载：卡片先显示底色，图到位后淡入，避免整屏图片同时跳出 */
+.img-fade { animation: imgIn .45s var(--ease) both; }
+@keyframes imgIn { from { opacity: 0; } to { opacity: 1; } }
+
 /* =========================================================
    15. 留言墙
    ========================================================= */
@@ -1711,9 +1740,45 @@ select.field { cursor: pointer; }
   display: grid;
   place-items: center;
   color: var(--ink-4);
+  position: relative;
 }
 .detail-media.is-empty { aspect-ratio: 1 / 1; }
 .detail-media img { width: 100%; height: 100%; object-fit: cover; }
+.detail-media img.is-fading { animation: imgFade .28s var(--ease); }
+@keyframes imgFade { from { opacity: .3; } to { opacity: 1; } }
+
+/* 轮播：左右切换 + 页码 */
+.detail-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: rgba(245, 240, 230, .9);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.detail-nav:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.detail-nav.prev { left: 10px; }
+.detail-nav.next { right: 10px; }
+.detail-nav svg { pointer-events: none; }
+.detail-counter {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 3px 8px;
+  background: rgba(245, 240, 230, .92);
+  border: 1px solid var(--rule);
+  font-size: 11px;
+  letter-spacing: .05em;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
 
 .detail-thumbs { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
 .detail-thumb {
@@ -1925,6 +1990,45 @@ select.field { cursor: pointer; }
   border: 1px solid var(--rule);
   background: var(--paper-2);
 }
+
+/* 聚焦但没输入时：最近搜索 + 热门词 */
+.suggest-idle { padding: 13px 14px 15px; }
+.suggest-group + .suggest-group { margin-top: 15px; }
+.suggest-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  font-size: 10.5px;
+  letter-spacing: .14em;
+  color: var(--ink-4);
+}
+.suggest-clear {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  color: var(--ink-4);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.suggest-clear:hover { color: var(--accent); }
+.suggest-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.suggest-chip {
+  background: none;
+  border: 1px solid var(--rule);
+  padding: 5px 11px;
+  font-size: 12px;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background .16s, border-color .16s, color .16s;
+}
+.suggest-chip:hover { border-color: var(--ink); color: var(--ink); background: var(--paper-3); }
+.suggest-chip.is-hot { border-color: rgba(179, 67, 43, .32); color: var(--accent); }
+.suggest-chip.is-hot:hover { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 .suggest-item {
   display: flex;
   align-items: center;
@@ -2085,6 +2189,7 @@ select.field { cursor: pointer; }
   .sheet-foot { flex-wrap: wrap; }
   .sheet-foot .foot-note { flex: 1 0 100%; margin: 0 0 9px; }
   .mast-note { margin-top: 22px; font-size: 11.5px; }
+  .search-kbd { display: none; }
 }
 </style>
 </head>
@@ -2653,6 +2758,66 @@ function seedData() {
         contact: '微信：bike_2024',
         user: user('孙悦', '2023047712'), createdAt: now - 3 * day,
         status: 'done', views: 91
+      },
+      {
+        id: uid('lost'), type: 'lost',
+        title: '寻找一副白色蓝牙耳机，充电盒有划痕',
+        cat: '电子数码',
+        place: '体育馆羽毛球场 · 3 号场地旁边',
+        happenedAt: formatDate(now - 1 * day),
+        desc: '昨晚打球时摘下来放在场边长椅上，走的时候忘了拿。\n白色充电盒右下角有一道明显划痕，耳机上套了透明硅胶套。可能是同场打球的同学收走了。',
+        images: [],
+        contact: '微信：airpod_white',
+        user: user('王思远', '2023052744'), createdAt: now - 5 * hour,
+        status: 'open', views: 46
+      },
+      {
+        id: uid('lost'), type: 'found',
+        title: '捡到一把黑色折叠伞（二教 305 讲台旁）',
+        cat: '生活用品',
+        place: '二教 305 教室',
+        happenedAt: formatDate(now - 1 * day),
+        desc: '下课收东西时发现的，伞柄是木头的，伞面上有一个小小的猫头图案。\n现在放在二教一楼的失物箱里，也可以直接找我拿。',
+        images: [],
+        contact: 'QQ：41200988',
+        user: user('赵一诺', '2024031987'), createdAt: now - 8 * hour,
+        status: 'open', views: 33
+      },
+      {
+        id: uid('lost'), type: 'lost',
+        title: '学生证丢了，姓名「何佳」，2023 级',
+        cat: '证件卡类',
+        place: '可能是行政楼到图书馆的路上',
+        happenedAt: formatDate(now - 2 * day),
+        desc: '昨天下午去行政楼盖章，回来就找不到了。卡套是米色布面的。\n补办要等两周，近期有考试需要出示，麻烦捡到的同学联系我。',
+        images: [],
+        contact: '微信：hejia2023',
+        user: user('何佳', '2023064567'), createdAt: now - 9 * hour,
+        status: 'open', views: 71
+      },
+      {
+        id: uid('lost'), type: 'found',
+        title: '捡到一本考研英语真题（2010—2024），写满笔记',
+        cat: '书籍资料',
+        place: '图书馆二楼自习区 · 靠窗第 5 桌',
+        happenedAt: formatDate(now - 2 * day),
+        desc: '书里笔记做得很密，还有不少便利贴，看得出来花了很多功夫，应该很着急。\n已交给图书馆二楼前台，报书名就能领。',
+        images: [],
+        contact: '微信：lib_front_02（图书馆前台）',
+        user: user('林川', '2022078899'), createdAt: now - 1 * day - 2 * hour,
+        status: 'open', views: 88
+      },
+      {
+        id: uid('lost'), type: 'lost',
+        title: '丢了一个蓝色洗漱包，里面有牙套盒',
+        cat: '生活用品',
+        place: '六舍三楼公共盥洗室',
+        happenedAt: formatDate(now - 3 * day),
+        desc: '洗漱包是深蓝色的，拉链头断了一半。里面有一个透明牙套盒，那个比较重要。\n可能是被一起放到别的架子上了，麻烦同一楼层的同学帮忙留意。',
+        images: [],
+        contact: '微信：washbag_blue',
+        user: user('郑晓', '2022045566'), createdAt: now - 1 * day - 6 * hour,
+        status: 'open', views: 29
       }
     ],
 
@@ -2662,7 +2827,7 @@ function seedData() {
         price: 1580, oldPrice: 2499,
         cond: '几乎全新', cat: '电子数码', trade: '校内面交',
         desc: '大一买的，主要用来记笔记，屏幕无划痕（一直贴钢化膜），电池健康良好。\n附赠 Apple Pencil 一代、原装充电器、一个磁吸保护壳。\n毕业清仓，诚意出，可以当面验机。',
-        images: ['assets/tablet.jpg'],
+        images: ['assets/tablet.jpg', 'assets/tablet-2.jpg'],
         contact: '微信：ipad_2021_sell',
         user: user('周子涵', '2021010234'), createdAt: now - 2 * hour,
         status: 'onsale', views: 486, wants: ['2023013872', '2024021183']
@@ -2672,7 +2837,7 @@ function seedData() {
         price: 145, oldPrice: 329,
         cond: '几乎全新', cat: '电子数码', trade: '两者都可',
         desc: '打字声音很清脆，支持蓝牙三模，可同时连三台设备。\n键帽无打油，附送拔键器和一套备用键帽。',
-        images: ['assets/keyboard.jpg'],
+        images: ['assets/keyboard.jpg', 'assets/keyboard-2.jpg'],
         contact: '微信：kb_68_blue',
         user: user('林川', '2022078899'), createdAt: now - 4 * day,
         status: 'onsale', views: 388, wants: ['2023015566', '2024031987', '2023047712']
@@ -2692,7 +2857,7 @@ function seedData() {
         price: 45, oldPrice: 168,
         cond: '轻微使用痕迹', cat: '教材书籍', trade: '校内面交',
         desc: '数学一全套，题目基本没写字，笔记都写在附赠的错题本上。\n适合暑假开始复习的同学，整套打包出，不单卖。可以约在图书馆门口交易。',
-        images: [],
+        images: ['assets/books.jpg', 'assets/books-2.jpg'],
         contact: 'QQ：552103887',
         user: user('吴桐', '2022018899'), createdAt: now - 5 * hour,
         status: 'onsale', views: 232, wants: ['2023052744']
@@ -2736,6 +2901,66 @@ function seedData() {
         contact: '微信：lamp_usb',
         user: user('何佳', '2023064567'), createdAt: now - 3 * day,
         status: 'sold', views: 264, wants: []
+      },
+      {
+        id: uid('mk'), title: '米家台灯 Pro，可无级调光',
+        price: 95, oldPrice: 199,
+        cond: '九成新', cat: '生活用品', trade: '校内面交',
+        desc: '用了一个学期，功能一切正常，只是换了宿舍有顶灯就不太用了。\n支持色温调节，看书很舒服。附带原装电源。',
+        images: [],
+        contact: '微信：lamp_pro_95',
+        user: user('黄子豪', '2023023311'), createdAt: now - 6 * hour,
+        status: 'onsale', views: 87, wants: []
+      },
+      {
+        id: uid('mk'), title: '加厚瑜伽垫 183×61cm，送拉伸带',
+        price: 35, oldPrice: 89,
+        cond: '九成新', cat: '其他', trade: '校内面交',
+        desc: '买来跟着视频练了没几次，卷起来一直放着。没有异味，表面无破损。\n送一条拉伸带和一个收纳绑带。',
+        images: [],
+        contact: 'QQ：55612340',
+        user: user('许安然', '2024031099'), createdAt: now - 11 * hour,
+        status: 'onsale', views: 52, wants: ['2023013872']
+      },
+      {
+        id: uid('mk'), title: '美的电热水壶 1.5L，宿舍可用小功率',
+        price: 45, oldPrice: 129,
+        cond: '八成新', cat: '生活用品', trade: '校内面交',
+        desc: '毕业清仓，烧水正常，壶身有一点水垢，用柠檬酸泡一下就好。\n800W 小功率，宿舍能用。',
+        images: [],
+        contact: '微信：kettle_45',
+        user: user('陈嘉豪', '2022036621'), createdAt: now - 1 * day - 1 * hour,
+        status: 'onsale', views: 113, wants: []
+      },
+      {
+        id: uid('mk'), title: 'JBL GO3 蓝牙音箱，音质不错',
+        price: 130, oldPrice: 299,
+        cond: '九成新', cat: '电子数码', trade: '校内面交',
+        desc: '平时在宿舍听歌用，声音比手机外放好太多。防水，带去操场也没问题。\n包装盒还在，附充电线。',
+        images: [],
+        contact: '微信：jbl_go3',
+        user: user('刘浩然', '2023015566'), createdAt: now - 1 * day - 5 * hour,
+        status: 'onsale', views: 156, wants: ['2023052744', '2023064567']
+      },
+      {
+        id: uid('mk'), title: '通勤自行车 26 寸，带车筐和车锁',
+        price: 260, oldPrice: 799,
+        cond: '八成新', cat: '其他', trade: '校内面交',
+        desc: '骑了两年，刹车和变速都正常，上个月刚换过内胎。\n车筐、车锁、打气筒一起给。毕业了带不走，价格可小刀。',
+        images: [],
+        contact: '微信：bike_sell_26',
+        user: user('吴桐', '2022018899'), createdAt: now - 2 * day - 3 * hour,
+        status: 'onsale', views: 231, wants: []
+      },
+      {
+        id: uid('mk'), title: '24 寸显示器 1080P，写代码看论文很爽',
+        price: 380, oldPrice: 899,
+        cond: '九成新', cat: '电子数码', trade: '校内自提',
+        desc: '接笔记本当副屏用了一年，无亮点无坏点，支架可调角度。\n自提优先，宿舍楼下交易，我可以帮忙搬。',
+        images: [],
+        contact: '微信：monitor_24',
+        user: user('孙悦', '2023047712'), createdAt: now - 2 * day - 8 * hour,
+        status: 'onsale', views: 174, wants: ['2024021183']
       }
     ],
 
@@ -2809,6 +3034,8 @@ var state = {
   marketQuery: '',
   marketSort: 'new',
   wallSort: 'new',
+  lostLimit: 8,
+  marketLimit: 8,
   profileTab: 'posts',
   pubType: 'lost',
   pubImages: []
@@ -2890,7 +3117,8 @@ function findItem(type, id) {
 // 有图用图，无图用「待补图」版式：线性图标 + 分类名 + 细内框
 function mediaHtml(item, isMarket, iconSize) {
   if (item.images && item.images.length) {
-    return '<img src="' + item.images[0] + '" alt="' + escapeHtml(item.title) + '">';
+    return '<img class="img-fade" src="' + item.images[0] + '" alt="' + escapeHtml(item.title) + '" ' +
+      'loading="lazy" decoding="async">';
   }
   return '<div class="ph">' +
     icon(catIconName(item.cat, isMarket), iconSize || 30) +
@@ -3101,6 +3329,7 @@ function renderHome() {
         '<div class="searchline">' +
           icon('search', 15) +
           '<input id="heroSearch" type="text" placeholder="搜一搜：校园卡、自行车、iPad、考研资料…" autocomplete="off">' +
+          '<kbd class="search-kbd">/</kbd>' +
           '<button data-act="hero-search">搜索</button>' +
         '</div>' +
         '<div id="heroSuggest"></div>' +
@@ -3272,10 +3501,31 @@ function renderLost() {
   renderLostGrid();
 }
 
+var PAGE_SIZE = 8;
+
+/* 列表分页：只渲染前 limit 条，剩余用按钮带出，避免一次塞几十张卡片 */
+function loadMoreHtml(total, limit, listKey) {
+  var rest = total - limit;
+  if (rest <= 0) return '';
+
+  return '<div class="load-more">' +
+    '<button class="btn load-more-btn" data-act="load-more" data-list="' + listKey + '">' +
+      '加载更多 · 还有 ' + rest + ' 条</button>' +
+    '<div class="load-more-tip">已显示 ' + limit + ' / ' + total + ' 条</div>' +
+  '</div>';
+}
+
 function renderLostGrid() {
   var grid = $('#lostGrid');
   if (!grid) return;
   var list = filterLost();
+
+  /* 筛选条件一变就回第一页，否则会停在「已加载 27 条」的状态 */
+  var sig = [state.lostTab, state.lostCat, state.lostQuery, state.lostSort].join('|');
+  if (state.lostSig !== sig) {
+    state.lostSig = sig;
+    state.lostLimit = PAGE_SIZE;
+  }
 
   var line = '<div class="resultline">共 <b>' + list.length + '</b> 条信息' +
     (state.lostQuery ? ' · 关键词「' + escapeHtml(state.lostQuery) + '」' : '') + '</div>';
@@ -3285,7 +3535,9 @@ function renderLostGrid() {
     return;
   }
 
-  grid.innerHTML = line + '<div class="grid">' + list.map(lostCardHtml).join('') + '</div>';
+  grid.innerHTML = line + '<div class="grid">' +
+    list.slice(0, state.lostLimit).map(lostCardHtml).join('') + '</div>' +
+    loadMoreHtml(list.length, state.lostLimit, 'lost');
 }
 
 /* =========================================================
@@ -3372,6 +3624,12 @@ function renderMarketGrid() {
   if (!grid) return;
   var list = filterMarket();
 
+  var sig = [state.marketTab, state.marketCat, state.marketQuery, state.marketSort].join('|');
+  if (state.marketSig !== sig) {
+    state.marketSig = sig;
+    state.marketLimit = PAGE_SIZE;
+  }
+
   var line = '<div class="resultline">共 <b>' + list.length + '</b> 件商品' +
     (state.marketQuery ? ' · 关键词「' + escapeHtml(state.marketQuery) + '」' : '') + '</div>';
 
@@ -3380,7 +3638,9 @@ function renderMarketGrid() {
     return;
   }
 
-  grid.innerHTML = line + '<div class="grid">' + list.map(marketCardHtml).join('') + '</div>';
+  grid.innerHTML = line + '<div class="grid">' +
+    list.slice(0, state.marketLimit).map(marketCardHtml).join('') + '</div>' +
+    loadMoreHtml(list.length, state.marketLimit, 'market');
 }
 /* =========================================================
    十二、留言墙
@@ -3663,13 +3923,30 @@ function openDetail(type, id, skipCount) {
 
   /* 图片列 */
   var currentIndex = state.detailImageIndex || 0;
-  var mainImage = state.detailImages.length
+  var total = state.detailImages.length;
+
+  var mainImage = total
     ? '<img id="detailMainImg" src="' + state.detailImages[currentIndex] + '" alt="' + escapeHtml(item.title) + '">'
     : '<span>' + catIconSvg(item.cat, isMarket, 40) + '</span>';
 
-  mediaCol += '<div class="detail-media' + (state.detailImages.length ? '' : ' is-empty') + '">' + mainImage + '</div>';
+  mediaCol += '<div class="detail-media' + (total ? '' : ' is-empty') + '">' + mainImage;
 
-  if (state.detailImages.length > 1) {
+  if (total > 1) {
+    mediaCol +=
+      '<button type="button" class="detail-nav prev" data-act="detail-img-prev" aria-label="上一张">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+        'stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>' +
+      '</button>' +
+      '<button type="button" class="detail-nav next" data-act="detail-img-next" aria-label="下一张">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+        'stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>' +
+      '</button>' +
+      '<div class="detail-counter" id="detailCounter">' + (currentIndex + 1) + ' / ' + total + '</div>';
+  }
+
+  mediaCol += '</div>';
+
+  if (total > 1) {
     mediaCol += '<div class="detail-thumbs">' + state.detailImages.map(function (src, i) {
       return '<button class="detail-thumb' + (i === currentIndex ? ' on' : '') + '" data-act="detail-img" data-index="' + i + '">' +
         '<img src="' + src + '" alt=""></button>';
@@ -3795,6 +4072,30 @@ function openDetail(type, id, skipCount) {
   $('#detailModal').classList.remove('hidden');
 }
 
+/* 切换详情大图：索引循环，同步缩略图与页码，不整块重渲染 */
+function showDetailImage(index) {
+  var total = state.detailImages.length;
+  if (total < 1) return;
+
+  var i = (index % total + total) % total;
+  state.detailImageIndex = i;
+
+  var img = $('#detailMainImg');
+  if (img) {
+    img.src = state.detailImages[i];
+    img.classList.remove('is-fading');
+    void img.offsetWidth;
+    img.classList.add('is-fading');
+  }
+
+  $$('.detail-thumb').forEach(function (thumb, k) {
+    thumb.classList.toggle('on', k === i);
+  });
+
+  var counter = $('#detailCounter');
+  if (counter) counter.textContent = (i + 1) + ' / ' + total;
+}
+
 function closeDetail() {
   $('#detailModal').classList.add('hidden');
 }
@@ -3802,6 +4103,83 @@ function closeDetail() {
 /* =========================================================
    十五、发布弹窗
    ========================================================= */
+/* =========================================================
+   发布草稿：填到一半关掉不会白填
+   只存文本字段，图片是 base64 太大，不纳入草稿
+   ========================================================= */
+var DRAFT_KEY = 'campusloop_draft_v1';
+var DRAFT_TTL = 3 * 24 * 60 * 60 * 1000;
+
+var draftTimer = null;
+
+function readDraft() {
+  try {
+    var raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+
+    var draft = JSON.parse(raw);
+    if (!draft || !draft.fields) return null;
+    if (Date.now() - (draft.savedAt || 0) > DRAFT_TTL) {
+      localStorage.removeItem(DRAFT_KEY);
+      return null;
+    }
+    return draft;
+  } catch (err) {
+    return null;
+  }
+}
+
+function draftHasContent(draft) {
+  if (!draft) return false;
+  var keys = Object.keys(draft.fields);
+  for (var i = 0; i < keys.length; i++) {
+    var value = String(draft.fields[keys[i]] || '').trim();
+    if (value) return true;
+  }
+  return false;
+}
+
+function collectDraft() {
+  var body = $('#pubBody');
+  if (!body) return;
+
+  var fields = {};
+  $$('input, textarea, select', body).forEach(function (node) {
+    if (!node.id) return;
+    fields[node.id] = node.value;
+  });
+
+  var draft = { type: state.pubType, fields: fields, savedAt: Date.now() };
+
+  if (draftHasContent(draft)) {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch (err) { /* 配额满就算了，不影响发布 */ }
+  } else {
+    clearDraft();
+  }
+}
+
+function saveDraftSoon() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(collectDraft, 400);
+}
+
+function clearDraft() {
+  clearTimeout(draftTimer);
+  try { localStorage.removeItem(DRAFT_KEY); } catch (err) { /* ignore */ }
+}
+
+function restoreDraft(draft) {
+  var body = $('#pubBody');
+  if (!body || !draft) return;
+
+  Object.keys(draft.fields).forEach(function (id) {
+    var node = document.getElementById(id);
+    if (node) node.value = draft.fields[id];
+  });
+}
+
 function openPublish(type) {
   state.pubType = type;
   state.pubImages = [];
@@ -3816,6 +4194,14 @@ function openPublish(type) {
   $('#pubSub').textContent = titles[type].sub;
 
   renderPublishForm();
+
+  /* 有同一类型的草稿就填回去，省得重打一遍 */
+  var draft = readDraft();
+  if (draft && draft.type === type && draftHasContent(draft)) {
+    restoreDraft(draft);
+    toast('已恢复上次未提交的内容');
+  }
+
   $('#publishModal').classList.remove('hidden');
 }
 
@@ -4047,6 +4433,7 @@ function submitPublish() {
   }
 
   saveDB();
+  clearDraft();
   $('#publishModal').classList.add('hidden');
   renderCurrentView();
   toast('发布成功，等待同学联系你', 'ok');
@@ -4237,12 +4624,104 @@ function fallbackCopy(text) {
 /* =========================================================
    十八、首页搜索
    ========================================================= */
+/* =========================================================
+   搜索历史与热门词
+   ========================================================= */
+var HISTORY_KEY = 'campusloop_search_history';
+var HISTORY_MAX = 8;
+
+/* 热词靠数据统计得出，不是写死的榜单：哪个词在现有内容里出现得多就排在前面 */
+var HOT_WORDS = [
+  '校园卡', '保温杯', '耳机', '自行车', 'iPad', '教材', '钥匙', '雨伞',
+  '台灯', '显示器', '键盘', '篮球', '水壶', '充电宝', '书包', '手表',
+  '眼镜', '学生证', 'U盘', '计算器', '羽绒服', '吉他', '瑜伽垫', '吹风机'
+];
+
+function readSearchHistory() {
+  try {
+    var raw = localStorage.getItem(HISTORY_KEY);
+    var list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.slice(0, HISTORY_MAX) : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function pushSearchHistory(word) {
+  var text = String(word || '').trim();
+  if (!text) return;
+
+  var list = readSearchHistory().filter(function (w) { return w !== text; });
+  list.unshift(text);
+
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_MAX)));
+  } catch (err) { /* 配额满就忽略 */ }
+}
+
+function clearSearchHistory() {
+  try { localStorage.removeItem(HISTORY_KEY); } catch (err) { /* ignore */ }
+}
+
+function hotKeywords(limit) {
+  var pool = DB.lost.concat(DB.market);
+  var scored = [];
+
+  HOT_WORDS.forEach(function (word) {
+    var hits = 0;
+    pool.forEach(function (item) {
+      var haystack = item.title + ' ' + (item.desc || '');
+      if (haystack.indexOf(word) !== -1) hits++;
+    });
+    if (hits > 0) scored.push({ word: word, hits: hits });
+  });
+
+  scored.sort(function (a, b) { return b.hits - a.hits; });
+
+  return scored.slice(0, limit || 6).map(function (row) { return row.word; });
+}
+
+function renderSuggestIdle(box) {
+  var history = readSearchHistory();
+
+  /* 历史里已经有的词不再出现在热词里，避免同一个词占两行 */
+  var hot = hotKeywords(8).filter(function (word) {
+    return history.indexOf(word) === -1;
+  }).slice(0, 6);
+
+  var html = '<div class="suggest-idle">';
+
+  if (history.length) {
+    html += '<div class="suggest-group">' +
+      '<div class="suggest-label"><span>最近搜索</span>' +
+        '<button type="button" class="suggest-clear" data-act="clear-history">清空</button>' +
+      '</div><div class="suggest-chips">' +
+      history.map(function (word) {
+        return '<button type="button" class="suggest-chip" data-act="use-keyword" data-word="' +
+          escapeHtml(word) + '">' + escapeHtml(word) + '</button>';
+      }).join('') + '</div></div>';
+  }
+
+  if (hot.length) {
+    html += '<div class="suggest-group">' +
+      '<div class="suggest-label"><span>大家都在找</span></div>' +
+      '<div class="suggest-chips">' +
+      hot.map(function (word) {
+        return '<button type="button" class="suggest-chip is-hot" data-act="use-keyword" data-word="' +
+          escapeHtml(word) + '">' + escapeHtml(word) + '</button>';
+      }).join('') + '</div></div>';
+  }
+
+  html += '</div>';
+  box.innerHTML = html;
+}
+
 function renderHeroSuggest(query) {
   var box = $('#heroSuggest');
   if (!box) return;
 
   var keyword = query.trim().toLowerCase();
-  if (!keyword) { box.innerHTML = ''; return; }
+  if (!keyword) { renderSuggestIdle(box); return; }
 
   var hits = [];
 
@@ -4282,6 +4761,8 @@ function runHeroSearch() {
   if (!input) return;
   var keyword = input.value.trim();
   if (!keyword) { toast('输入关键词再搜索吧', 'err'); return; }
+
+  pushSearchHistory(keyword);
 
   var lower = keyword.toLowerCase();
   var hitLost = DB.lost.some(function (item) {
@@ -5149,6 +5630,7 @@ function bindEvents() {
     }
 
     var closer = event.target.closest('[data-close]');
+    if (closer && closer.dataset.close === 'publishModal') collectDraft();
     if (closer) {
       var modalId = closer.dataset.close;
       $('#' + modalId).classList.add('hidden');
@@ -5252,12 +5734,15 @@ function bindEvents() {
         break;
 
       case 'detail-img':
-        var index = Number(el.dataset.index);
-        state.detailImageIndex = index;
-        $('#detailMainImg').src = state.detailImages[index];
-        $$('.detail-thumb').forEach(function (thumb, i) {
-          thumb.classList.toggle('on', i === index);
-        });
+        showDetailImage(Number(el.dataset.index));
+        break;
+
+      case 'detail-img-prev':
+        showDetailImage(state.detailImageIndex - 1);
+        break;
+
+      case 'detail-img-next':
+        showDetailImage(state.detailImageIndex + 1);
         break;
 
       case 'reveal-contact':
@@ -5281,8 +5766,30 @@ function bindEvents() {
         handleDelete(el.dataset.type, el.dataset.id);
         break;
 
+      case 'load-more':
+        if (el.dataset.list === 'market') {
+          state.marketLimit += PAGE_SIZE;
+          renderMarketGrid();
+        } else {
+          state.lostLimit += PAGE_SIZE;
+          renderLostGrid();
+        }
+        break;
+
       case 'hero-search':
         runHeroSearch();
+        break;
+
+      case 'use-keyword':
+        var heroInput = $('#heroSearch');
+        if (heroInput) heroInput.value = el.dataset.word || '';
+        runHeroSearch();
+        break;
+
+      case 'clear-history':
+        clearSearchHistory();
+        renderHeroSuggest('');
+        toast('已清空搜索历史');
         break;
 
       case 'pub-img-add':
@@ -5363,6 +5870,11 @@ function bindEvents() {
     }
   });
 
+  /* 聚焦搜索框就展开面板：空输入时展示最近搜索与热词 */
+  document.addEventListener('focusin', function (event) {
+    if (event.target.id === 'heroSearch') renderHeroSuggest(event.target.value);
+  });
+
   document.addEventListener('input', function (event) {
     var input = event.target;
 
@@ -5375,6 +5887,8 @@ function bindEvents() {
     } else if (input.id === 'heroSearch') {
       renderHeroSuggest(input.value);
     }
+
+    if (input.closest && input.closest('#pubBody')) saveDraftSoon();
   });
 
   document.addEventListener('change', function (event) {
@@ -5389,6 +5903,8 @@ function bindEvents() {
       addPublishImages(select.files);
       select.value = '';
     }
+
+    if (select.closest && select.closest('#pubBody')) saveDraftSoon();
   });
 
   document.addEventListener('keydown', function (event) {
@@ -5406,6 +5922,70 @@ function bindEvents() {
       postNote();
     }
   });
+
+  /* 全局快捷键：Esc 关弹窗、/ 聚焦搜索、←→ 切详情图 */
+  document.addEventListener('keydown', function (event) {
+    /* 登录页不接管键盘 */
+    if (!$('#loginView').classList.contains('hidden')) return;
+
+    var tag = (event.target.tagName || '').toLowerCase();
+    var typing = tag === 'input' || tag === 'textarea' || tag === 'select' || event.target.isContentEditable;
+
+    if (event.key === 'Escape') {
+      var modal = document.querySelector('.modal:not(.hidden)');
+      if (!modal) return;
+      event.preventDefault();
+
+      /* 走弹窗自己的关闭按钮，确认框的 Promise 和发布草稿才不会漏 */
+      var closer = modal.querySelector('[data-close]');
+      if (closer) closer.click();
+      return;
+    }
+
+    if (typing) return;
+
+    if (event.key === '/') {
+      event.preventDefault();
+      if (state.view !== 'home') go('home');
+      var heroInput = $('#heroSearch');
+      if (heroInput) {
+        heroInput.focus();
+        heroInput.select();
+      }
+      return;
+    }
+
+    var detailOpen = !$('#detailModal').classList.contains('hidden');
+    if (detailOpen && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      if (state.detailImages.length < 2) return;
+      event.preventDefault();
+      showDetailImage(state.detailImageIndex + (event.key === 'ArrowRight' ? 1 : -1));
+    }
+  });
+
+  /* 详情图：手机左右滑动切换 */
+  var touchStartX = 0;
+  var touchStartY = 0;
+
+  document.addEventListener('touchstart', function (event) {
+    var media = event.target.closest && event.target.closest('.detail-media');
+    if (!media || state.detailImages.length < 2) return;
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function (event) {
+    if (!touchStartX) return;
+
+    var dx = event.changedTouches[0].clientX - touchStartX;
+    var dy = event.changedTouches[0].clientY - touchStartY;
+    touchStartX = 0;
+    touchStartY = 0;
+
+    /* 横向位移要明显大于纵向，避免误触翻页 */
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+    showDetailImage(state.detailImageIndex + (dx < 0 ? 1 : -1));
+  }, { passive: true });
 
   $$('.nav-item').forEach(function (btn) {
     btn.addEventListener('click', function () { go(btn.dataset.view); });
