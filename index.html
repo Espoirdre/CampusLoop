@@ -787,8 +787,28 @@ select.field { cursor: pointer; }
 .mast-figure figcaption b { font-weight: 600; color: var(--ink-2); }
 
 /* 数据条 */
+/* 首页编者说明：像报纸的编者按，一行细字交代边界 */
+.mast-note {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 30px;
+  padding-top: 11px;
+  border-top: 1px solid var(--rule);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.mast-note .k {
+  flex: none;
+  font-family: var(--serif);
+  font-size: 10.5px;
+  letter-spacing: .18em;
+  color: var(--accent);
+}
+
 .statbar {
-  margin-top: 40px;
+  margin-top: 26px;
   border-top: 2px solid var(--ink);
   border-bottom: 1px solid var(--rule);
   display: grid;
@@ -1593,6 +1613,14 @@ select.field { cursor: pointer; }
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+  align-items: center;
+}
+/* 发布弹窗底部的边界说明，靠左、压到按钮同一行 */
+.sheet-foot .foot-note {
+  margin-right: auto;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: .01em;
 }
 
 /* =========================================================
@@ -2053,6 +2081,10 @@ select.field { cursor: pointer; }
   .topbar-right .btn .txt { display: none; }
   .section-head .num { display: none; }
   .profile-info h2 .link-btn { display: block; margin: 7px 0 0; }
+  /* 小屏上说明文字独占一行，别把两个按钮挤跑 */
+  .sheet-foot { flex-wrap: wrap; }
+  .sheet-foot .foot-note { flex: 1 0 100%; margin: 0 0 9px; }
+  .mast-note { margin-top: 22px; font-size: 11.5px; }
 }
 </style>
 </head>
@@ -2192,6 +2224,7 @@ select.field { cursor: pointer; }
     </div>
     <div class="sheet-body" id="pubBody"></div>
     <div class="sheet-foot">
+      <span class="foot-note">演示版：发布后只存在你的浏览器，其他同学看不到</span>
       <button class="btn" data-close="publishModal">取消</button>
       <button class="btn btn-solid" id="pubSubmit">确认发布</button>
     </div>
@@ -3079,6 +3112,12 @@ function renderHome() {
         '<figcaption><b>本期封面</b> · 图书馆四楼，一摞还没人认领的教材。每一本都在等它的主人回来。</figcaption>' +
       '</figure>' +
     '</div>' +
+  '</div>';
+
+  /* ---- 编者说明 ---- */
+  html += '<div class="mast-note">' +
+    '<span class="k">说明</span>' +
+    '<span class="tx">演示版：发布的内容保存在你自己的浏览器里，换设备或清理缓存后看不到。</span>' +
   '</div>';
 
   /* ---- 数据条 ---- */

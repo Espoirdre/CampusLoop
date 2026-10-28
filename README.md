@@ -4,11 +4,18 @@
 >   
 > 一个纯前端的校园信息互助平台：**失物招领 / 二手市场 / 留言墙** 三合一。
 
-**在线预览**：<https://espoirdre.github.io/CampusLoop/>
-  
+**在线预览**：<https://espoirdre.github.io/CampusLoop/>  
 **代码仓库**：<https://github.com/Espoirdre/CampusLoop>
 
-打开 `index.html` 就能用，不需要安装任何依赖、不需要后端服务。
+<img src="docs/qrcode.png" width="190" alt="扫码在手机上打开">
+
+手机扫码直接打开，建议在浏览器菜单里「添加到主屏幕」，用起来跟 App 差不多。
+
+也可以在电脑上双击 `index.html`，不需要安装任何依赖、不需要后端服务。
+
+> **关于数据**：这是纯前端演示版，发布的内容存在各自浏览器的 `localStorage` 里，
+> 换设备、换浏览器、清理缓存都会看不到，同学之间也不互通。
+> 想让多人共用一套数据，需要接云端数据库（见「下一步可以做」）。
 
 ![首页](docs/screenshots/02-home.jpg)
 
