@@ -159,19 +159,25 @@ https://abcdefghijklmnop.supabase.co
 
 点右边的复制图标。
 
-### 3.3 复制第二个值：anon public key
+> **只复制到 `.supabase.co` 为止。** 如果你复制的地址后面还带着 `/rest/v1/`，
+> 代码也能自动处理（已经做了容错），但填干净的最省事。
 
-同一页往下滚，找到 **Project API keys**，里面有**两行**：
+### 3.3 复制第二个值：公开 key
 
-| 名字 | 能不能用 | 说明 |
+同一页往下滚，找到 **Project API keys**。
+
+Supabase 有两代 key，你可能看到其中任意一种，**都能用**：
+
+| 你看到的格式 | 是什么 | 用不用 |
 |---|---|---|
-| `anon` / `public` | **用这个** | 只能按规则读写数据，泄露风险可控 |
-| `service_role` / `secret` | **绝对不要用** | 拥有全部权限，泄露等于把整个数据库交给别人 |
+| `sb_publishable_xxxxxxxx` | 新版公开 key | **用这个** |
+| `eyJhbGciOiJIUzI1NiIs...`（很长一串）放在 `anon` / `public` 那一行 | 旧版公开 key | **也可以用** |
+| `sb_secret_xxxxxxxx` | 新版机密 key | **绝对不要用** |
+| `eyJ...` 放在 `service_role` / `secret` 那一行 | 旧版机密 key | **绝对不要用** |
 
-点 `anon` 那一行右边的 **Reveal**（如果被遮住），然后复制。它是一长串以 `eyJ` 开头的字符。
+判断标准只有一个：**名字里带 publishable / anon / public 的才是公开 key，其余一律不要碰。**
 
-> **再强调一次**：复制 `anon` 那个，不是 `service_role`。
-> 两个长得像，但用错的后果很严重。
+复制下来。如果旧版 key 被遮住，点右边的 **Reveal** 再复制。
 
 ### 3.4 先存到记事本
 
@@ -185,6 +191,9 @@ KEY  = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs...
 ---
 
 ## 第 4 步：填进 index.html
+
+> **当前状态：已完成并通过真实连接验证。**
+> 这一节留作记录，以后换项目、换 key、或想退回单机模式时照做即可。
 
 ### 4.1 找到要改的地方
 
@@ -210,8 +219,14 @@ var CLOUD_CONFIG = {
 ```js
 var CLOUD_CONFIG = {
   url: 'https://xxxxxxxxxxxx.supabase.co',
-  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs...'
+  key: 'sb_publishable_xxxxxxxxxxxxxxxxxxxx'
 };
+```
+
+如果用的是旧版 JWT key，第二行就长这样：
+
+```js
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs...'
 ```
 
 ### 4.3 三个常见错误

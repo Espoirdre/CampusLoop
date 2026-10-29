@@ -2573,8 +2573,8 @@ function confirmDialog(options) {
    取值步骤见 docs/backend/SETUP.md 第 3 步。
    --------------------------------------------------------- */
 var CLOUD_CONFIG = {
-  url: '',   // 例：https://abcdefghijkl.supabase.co
-  key: ''    // 例：eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  url: 'https://ffbmdpnoiewticrhpanq.supabase.co',
+  key: 'sb_publishable_M1urFrv9RqjpUQ_HE9N0Jg_h1mOhZFu'
 };
 
 /* 第一次连上空的数据库时，是否把站内的示例数据推上去。
@@ -2650,7 +2650,10 @@ var Cloud = {
 
   request: function (path, options) {
     var opt = options || {};
-    var url = CLOUD_CONFIG.url.replace(/\/+$/, '') + '/rest/v1' + path;
+    /* 容错：从 Supabase 页面复制的地址常常带着 /rest/v1/ 后缀，
+       这里先摘掉，否则会拼成 /rest/v1/rest/v1/lost 而 404 */
+    var base = String(CLOUD_CONFIG.url || '').trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+    var url = base + '/rest/v1' + path;
 
     return fetch(url, {
       method: opt.method || 'GET',
