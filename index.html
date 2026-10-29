@@ -2562,8 +2562,26 @@ function confirmDialog(options) {
 }
 
 /* =========================================================
-   三、数据层（预留云端升级）
+   三、数据层（本地优先，可切换云端）
    ========================================================= */
+
+/* ---------------------------------------------------------
+   云端配置 —— 整个接入只需要改这一处
+
+   两个值都留空：一切照旧，数据只存在本机浏览器里，双击就能用。
+   两个值都填上：自动切成共享模式，所有人看到同一份数据。
+   取值步骤见 docs/backend/SETUP.md 第 3 步。
+   --------------------------------------------------------- */
+var CLOUD_CONFIG = {
+  url: '',   // 例：https://abcdefghijkl.supabase.co
+  key: ''    // 例：eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+};
+
+/* 第一次连上空的数据库时，是否把站内的示例数据推上去。
+   推上去的好处：所有人打开看到的是同一批示例，不会一片空白。
+   想彻底清空云端，把它改成 false，然后到平台控制台删表数据。 */
+var PUSH_SEED_TO_CLOUD = true;
+
 var STORAGE_KEY = 'campusloop_v1';
 var DB_VERSION = 1;
 var memoryStore = null;
@@ -2608,6 +2626,303 @@ var Store = {
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
   }
 };
+
+/* ---------------------------------------------------------
+   云端读写
+   只做三件事：拉全量、批量写入、批量删除。
+   走的是平台提供的 REST 接口，不需要自己写服务端。
+   CLOUD_CONFIG 留空时，这一整块不会被任何代码调用。
+   --------------------------------------------------------- */
+var Cloud = {
+  on: !!(CLOUD_CONFIG.url && CLOUD_CONFIG.key),
+
+  headers: function (extra) {
+    var base = {
+      'apikey': CLOUD_CONFIG.key,
+      'Authorization': 'Bearer ' + CLOUD_CONFIG.key,
+      'Content-Type': 'application/json'
+    };
+    if (extra) {
+      for (var name in extra) base[name] = extra[name];
+    }
+    return base;
+  },
+
+  request: function (path, options) {
+    var opt = options || {};
+    var url = CLOUD_CONFIG.url.replace(/\/+$/, '') + '/rest/v1' + path;
+
+    return fetch(url, {
+      method: opt.method || 'GET',
+      headers: Cloud.headers(opt.headers),
+      body: opt.body ? JSON.stringify(opt.body) : undefined
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.text().then(function (text) {
+          throw new Error('HTTP ' + res.status + '：' + text.slice(0, 160));
+        });
+      }
+      if (res.status === 204) return null;
+      return res.text().then(function (text) {
+        return text ? JSON.parse(text) : null;
+      });
+    });
+  },
+
+  /* 拉取六张表，拼成和本地 DB 完全一致的形状 */
+  loadAll: function () {
+    var tables = ['lost', 'market', 'wall', 'profiles', 'favs', 'accounts'];
+    var tasks = tables.map(function (name) {
+      return Cloud.request('/' + name + '?select=*');
+    });
+
+    return Promise.all(tasks).then(function (result) {
+      var data = {
+        lost: result[0] || [],
+        market: result[1] || [],
+        wall: result[2] || [],
+        profiles: {},
+        favs: {},
+        accounts: {}
+      };
+
+      (result[3] || []).forEach(function (row) {
+        data.profiles[row.sid] = {
+          name: row.name || '',
+          dept: row.dept || '',
+          contact: row.contact || '',
+          bio: row.bio || ''
+        };
+      });
+
+      (result[4] || []).forEach(function (row) {
+        if (!data.favs[row.sid]) data.favs[row.sid] = [];
+        data.favs[row.sid].push(row.itemId);
+      });
+
+      (result[5] || []).forEach(function (row) {
+        data.accounts[row.sid] = {
+          sid: row.sid,
+          name: row.name || '',
+          pwdHash: row.pwdHash || '',
+          createdAt: row.createdAt || 0
+        };
+      });
+
+      /* 列表统一按时间倒序，和本地渲染顺序保持一致 */
+      ['lost', 'market', 'wall'].forEach(function (name) {
+        data[name].sort(function (a, b) {
+          return (b.createdAt || 0) - (a.createdAt || 0);
+        });
+      });
+
+      return data;
+    });
+  },
+
+  /* 批量新增或覆盖：主键相同就更新，不同就插入 */
+  upsert: function (table, rows) {
+    if (!rows || !rows.length) return Promise.resolve();
+    return Cloud.request('/' + table, {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: rows
+    });
+  },
+
+  /* 按 id 批量删除 */
+  remove: function (table, ids) {
+    if (!ids || !ids.length) return Promise.resolve();
+    var parts = ids.map(function (value) {
+      return 'id.eq.' + encodeURIComponent(value);
+    });
+    return Cloud.request('/' + table + '?or=(' + parts.join(',') + ')', { method: 'DELETE' });
+  },
+
+  /* 收藏表按学号整份替换，比逐条比对简单可靠 */
+  clearFavs: function (sid) {
+    return Cloud.request('/favs?sid=eq.' + encodeURIComponent(sid), { method: 'DELETE' });
+  }
+};
+
+/* 首页和发布弹窗都要说明「数据到底存在哪」。
+   单机模式和云端模式说的话必须不一样，否则用户会被误导。 */
+function dataScopeNote() {
+  if (Cloud.on) {
+    return '云端同步已开启：站内内容所有同学共享，换设备打开也能看到。';
+  }
+  return '演示版：发布的内容保存在你自己的浏览器里，换设备或清理缓存后看不到。';
+}
+
+/* ---------------------------------------------------------
+   增量同步
+   本地是「整份覆盖」，云端绝不能这么干：两个人同时发布时，
+   后保存的人会拿自己那份把对方的新内容冲掉。
+   所以这里比对上次同步的快照，只提交这次真正变动的记录。
+   --------------------------------------------------------- */
+var cloudSnap = null;
+
+function cloneDeep(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function dbSnapshot() {
+  return {
+    lost: DB.lost,
+    market: DB.market,
+    wall: DB.wall,
+    profiles: DB.profiles,
+    favs: DB.favs,
+    accounts: DB.accounts
+  };
+}
+
+function diffList(before, after) {
+  var prev = {};
+  var next = {};
+  var upserts = [];
+  var deletes = [];
+
+  (before || []).forEach(function (item) {
+    if (item && item.id) prev[item.id] = JSON.stringify(item);
+  });
+
+  (after || []).forEach(function (item) {
+    if (!item || !item.id) return;
+    next[item.id] = JSON.stringify(item);
+    if (prev[item.id] !== next[item.id]) upserts.push(item);
+  });
+
+  (before || []).forEach(function (item) {
+    if (item && item.id && !next[item.id]) deletes.push(item.id);
+  });
+
+  return { upserts: upserts, deletes: deletes };
+}
+
+function syncToCloud() {
+  if (!Cloud.on || !cloudSnap) return;
+
+  var current = cloneDeep(dbSnapshot());
+  var jobs = [];
+
+  ['lost', 'market', 'wall'].forEach(function (name) {
+    var diff = diffList(cloudSnap[name], current[name]);
+    if (diff.upserts.length) jobs.push(Cloud.upsert(name, diff.upserts));
+    if (diff.deletes.length) jobs.push(Cloud.remove(name, diff.deletes));
+  });
+
+  /* 资料：按学号逐个比对 */
+  var profRows = [];
+  for (var sid in current.profiles) {
+    var beforeProf = cloudSnap.profiles[sid];
+    var afterProf = current.profiles[sid];
+    if (JSON.stringify(beforeProf) !== JSON.stringify(afterProf)) {
+      profRows.push({
+        sid: sid,
+        name: afterProf.name || '',
+        dept: afterProf.dept || '',
+        contact: afterProf.contact || '',
+        bio: afterProf.bio || ''
+      });
+    }
+  }
+  if (profRows.length) jobs.push(Cloud.upsert('profiles', profRows));
+
+  /* 账号：新注册的账号也要推上去，否则换台设备就登不进来了 */
+  var accRows = [];
+  for (var accSid in current.accounts) {
+    if (JSON.stringify(cloudSnap.accounts[accSid]) !== JSON.stringify(current.accounts[accSid])) {
+      var acc = current.accounts[accSid] || {};
+      accRows.push({
+        sid: accSid,
+        name: acc.name || '',
+        pwdHash: acc.pwdHash || '',
+        createdAt: acc.createdAt || 0
+      });
+    }
+  }
+  if (accRows.length) jobs.push(Cloud.upsert('accounts', accRows));
+
+  /* 收藏：只处理当前登录用户那一份 */
+  var me = currentUser();
+  if (me && JSON.stringify(cloudSnap.favs[me.sid]) !== JSON.stringify(current.favs[me.sid])) {
+    var myRows = (current.favs[me.sid] || []).map(function (itemId) {
+      return { sid: me.sid, itemId: itemId, createdAt: Date.now() };
+    });
+    jobs.push(Cloud.clearFavs(me.sid).then(function () {
+      if (myRows.length) return Cloud.upsert('favs', myRows);
+    }));
+  }
+
+  if (!jobs.length) return;
+
+  Promise.all(jobs).then(function () {
+    cloudSnap = current;
+  }).catch(function (err) {
+    console.warn('[Cloud] 同步失败：', err);
+    toast('云端同步失败，数据已保存在本机', 'err');
+  });
+}
+
+/* 云端数据合并进本地：云端有的以云端为准，本地独有的保留 */
+function mergeCloud(remote) {
+  ['lost', 'market', 'wall'].forEach(function (name) {
+    var byId = {};
+    (DB[name] || []).forEach(function (item) {
+      if (item && item.id) byId[item.id] = item;
+    });
+    (remote[name] || []).forEach(function (item) {
+      if (item && item.id) byId[item.id] = item;
+    });
+    DB[name] = Object.keys(byId).map(function (key) {
+      return byId[key];
+    }).sort(function (a, b) {
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+  });
+
+  /* 本地改过但还没推上去的优先，避免刚编辑完就被旧数据盖掉 */
+  DB.profiles = Object.assign({}, remote.profiles, DB.profiles);
+  DB.favs = Object.assign({}, remote.favs, DB.favs);
+  DB.accounts = Object.assign({}, remote.accounts, DB.accounts);
+}
+
+/* 云端三张主表都为空时，把站内的示例数据整份推上去。
+   这样第一个部署的人不会看到一个空站，后来的人也能看到同一批内容。 */
+function cloudIsEmpty(remote) {
+  return !remote.lost.length && !remote.market.length && !remote.wall.length;
+}
+
+function pushSeedToCloud() {
+  var jobs = [];
+
+  ['lost', 'market', 'wall'].forEach(function (name) {
+    if (DB[name] && DB[name].length) jobs.push(Cloud.upsert(name, DB[name]));
+  });
+
+  var profRows = [];
+  for (var sid in DB.profiles) {
+    var prof = DB.profiles[sid] || {};
+    profRows.push({
+      sid: sid,
+      name: prof.name || '',
+      dept: prof.dept || '',
+      contact: prof.contact || '',
+      bio: prof.bio || ''
+    });
+  }
+  if (profRows.length) jobs.push(Cloud.upsert('profiles', profRows));
+
+  if (!jobs.length) return Promise.resolve();
+
+  return Promise.all(jobs).then(function () {
+    cloudSnap = cloneDeep(dbSnapshot());
+    console.log('[Cloud] 示例数据已推送到云端');
+  }).catch(function (err) {
+    console.warn('[Cloud] 示例数据推送失败：', err);
+  });
+}
 
 /* =========================================================
    四、常量
@@ -3044,24 +3359,86 @@ var state = {
 /* =========================================================
    七、数据读写封装
    ========================================================= */
+/* 云端模式下的空白骨架：没有本地缓存时先用它，等云端数据回来再填 */
+function emptyDB() {
+  return {
+    __v: DB_VERSION,
+    user: null,
+    lost: [],
+    market: [],
+    wall: [],
+    profiles: {},
+    favs: {},
+    accounts: {}
+  };
+}
+
 function initDB() {
   var saved = Store.read();
-  if (saved && saved.__v === DB_VERSION) {
+  var hasCache = !!(saved && saved.__v === DB_VERSION);
+
+  if (hasCache) {
     DB = saved;
+  } else if (Cloud.on) {
+    /* 云端模式且本机没有缓存：先搭空架子，等云端回来再填。
+       这里绝不能塞示例数据 —— 每台新设备都会生成一批 id 不同的副本，
+       合并进同一张表就变成两份重复内容。 */
+    DB = emptyDB();
   } else {
     DB = seedData();
     Store.write(DB);
   }
+
   if (!DB.favs) DB.favs = {};
   if (!DB.profiles) DB.profiles = {};
   if (!DB.accounts) DB.accounts = {};
   if (!Array.isArray(DB.lost)) DB.lost = [];
   if (!Array.isArray(DB.market)) DB.market = [];
   if (!Array.isArray(DB.wall)) DB.wall = [];
+
+  /* 单机模式：到这里就结束了，和以前完全一样 */
+  if (!Cloud.on) {
+    cloudSnap = null;
+    return;
+  }
+
+  /* 云端模式：先用本机缓存把界面撑起来，再去拉最新数据，
+     网络慢的时候不会白屏 */
+  cloudSnap = cloneDeep(dbSnapshot());
+
+  Cloud.loadAll().then(function (remote) {
+    if (cloudIsEmpty(remote)) {
+      /* 云端一片空白：本地有内容就推本地的，本地也空才用示例数据起个头 */
+      if (!DB.lost.length && !DB.market.length && !DB.wall.length) {
+        var seed = seedData();
+        DB.lost = seed.lost;
+        DB.market = seed.market;
+        DB.wall = seed.wall;
+      }
+      cloudSnap = cloneDeep(dbSnapshot());
+      if (PUSH_SEED_TO_CLOUD) pushSeedToCloud();
+    } else {
+      mergeCloud(remote);
+      cloudSnap = cloneDeep(dbSnapshot());
+    }
+
+    if (sessionUser && typeof renderCurrentView === 'function') {
+      try {
+        renderCurrentView();
+      } catch (err) {
+        console.warn('[Cloud] 重绘失败：', err);
+      }
+    }
+  }).catch(function (err) {
+    console.warn('[Cloud] 拉取失败：', err);
+    toast('云端连接失败，当前显示的是本机缓存', 'err');
+  });
 }
 
 function saveDB() {
   Store.write(DB);
+  /* 先写本地，保证断网和云端出错时数据不丢；再推云端 */
+  syncToCloud();
 }
 
 function currentUser() {
@@ -3346,7 +3723,7 @@ function renderHome() {
   /* ---- 编者说明 ---- */
   html += '<div class="mast-note">' +
     '<span class="k">说明</span>' +
-    '<span class="tx">演示版：发布的内容保存在你自己的浏览器里，换设备或清理缓存后看不到。</span>' +
+    '<span class="tx">' + dataScopeNote() + '</span>' +
   '</div>';
 
   /* ---- 数据条 ---- */
@@ -6044,6 +6421,14 @@ function init() {
 
   initDB();
   bindEvents();
+
+  /* 发布弹窗底部那句提示要跟数据模式一致 */
+  var footNote = document.querySelector('.foot-note');
+  if (footNote) {
+    footNote.textContent = Cloud.on
+      ? '发布后会同步到云端，所有同学都能看到'
+      : '演示版：发布后只存在你的浏览器，其他同学看不到';
+  }
 
   if (Store.available === false) {
     toast('当前环境不支持本地存储，数据仅保留在本次会话', 'err');
