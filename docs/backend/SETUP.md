@@ -104,6 +104,36 @@ accounts      0
 | `already exists` | 表已经存在 | 不用管，脚本里用了 `if not exists`，重复跑是安全的 |
 | `permission denied` | 权限不足 | 确认你是用自己注册的账号登录的，不是别人的项目 |
 | `syntax error at or near` | 复制时漏了内容 | 重新全选复制一遍，注意别只复制了一半 |
+| `syntax error at or near "_"` 且 `LINE 1: _` | **编辑器里只有一个下划线**，根本不是脚本 | 见 2.6，改用分段执行 |
+
+### 2.6 如果整段粘贴老是失败，改成分段执行
+
+`docs/backend/steps/` 下面有 4 个拆分好的文件，**一次只跑一个**，
+每跑完一个看到 `Success` 再跑下一个：
+
+| 顺序 | 文件 | 内容 | 跑完的现象 |
+|---|---|---|---|
+| 1 | `step1.sql` | 用户资料 + 三张主表：profiles / lost / market / wall | `Success. No rows returned` |
+| 2 | `step2.sql` | 收藏与账号：favs / accounts | `Success. No rows returned` |
+| 3 | `step3.sql` | 索引 + 访问规则 | `Success. No rows returned` |
+| 4 | `step4.sql` | 自检查询 | 返回 6 行，记录数都是 0 |
+
+这 4 个文件拼起来和 `schema.sql` 是完全等价的（我校验过每一条语句）。
+
+**为什么分段更稳**：
+
+- 每段只有 8–68 行，复制时不容易被截断
+- 报错时能立刻知道是哪一段出问题，不用重新跑全部
+- 前面跑成功的部分不会因为后面报错而白费
+
+**分段执行的正确操作**（每次都要这样做）：
+
+1. 在 SQL Editor 里按 **Ctrl + A** 全选，按 **Delete** 清空
+2. 打开对应文件，按 **Ctrl + A** 全选，按 **Ctrl + C** 复制
+3. 回到编辑器，按 **Ctrl + V** 粘贴
+4. **检查第一行**：应该是以 `--` 开头的注释文字。如果第一行只有一个字符，说明没粘进去
+5. 点一下编辑器**空白处**取消选中（这一步很关键：有选中内容时，Supabase 只执行选中的那部分）
+6. 点 **Run** 或按 **Ctrl + Enter**
 
 ---
 
