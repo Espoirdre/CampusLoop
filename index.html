@@ -5384,7 +5384,9 @@ var AUTH_VIEW = {
           '<span class="ar">' + icon('arrow', 15) + '</span>' +
         '</button>' +
       '</div>' +
-      '<div class="auth-hint">注册的账号只保存在这台设备的浏览器里。' +
+      '<div class="auth-hint">' + (Cloud.on
+        ? '注册的账号会同步到云端，换台设备也能登录。'
+        : '注册的账号只保存在这台设备的浏览器里。') +
         '想直接体验，可用演示学号 <b>' + ACCOUNTS[0].sid + '</b> 走统一认证。</div>' +
     '</div>';
   },
