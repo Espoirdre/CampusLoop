@@ -2573,8 +2573,8 @@ function confirmDialog(options) {
    取值步骤见 docs/backend/SETUP.md 第 3 步。
    --------------------------------------------------------- */
 var CLOUD_CONFIG = {
-  url: 'https://ffbmdpnoiewticrhpanq.supabase.co',
-  key: 'sb_publishable_M1urFrv9RqjpUQ_HE9N0Jg_h1mOhZFu'
+  url: '',   // 例：https://abcdefghijkl.supabase.co
+  key: ''    // 例：sb_publishable_xxxxxxxxxxxx
 };
 
 /* 第一次连上空的数据库时，是否把站内的示例数据推上去。
@@ -2634,7 +2634,10 @@ var Store = {
    CLOUD_CONFIG 留空时，这一整块不会被任何代码调用。
    --------------------------------------------------------- */
 var Cloud = {
-  on: !!(CLOUD_CONFIG.url && CLOUD_CONFIG.key),
+  /* 只有在 http(s) 下才启用云端。
+     file:// 打开时浏览器会阻止跨域请求，与其让用户看到「连不上云端」的报错，
+     不如自动退回单机模式 —— 双击就能完整演示，不影响任何功能。 */
+  on: !!(CLOUD_CONFIG.url && CLOUD_CONFIG.key) && location.protocol !== 'file:',
 
   headers: function (extra) {
     var base = {
