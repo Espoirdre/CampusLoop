@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CampusLoop — 失物招领 / 二手市场 / 留言墙</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231B1712'/%3E%3Ctext x='50' y='73' font-size='56' text-anchor='middle' fill='%23F5F0E6' font-family='Georgia,serif'%3E%E6%A0%A1%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="assets/logo-mark-64.png">
+<link rel="apple-touch-icon" href="assets/logo-mark-192.png">
 <style>
 /* =========================================================
    CampusLoop · 编辑杂志风
@@ -262,12 +263,12 @@ select.field { cursor: pointer; }
   font-size: 19px;
   letter-spacing: .04em;
 }
-.login-mark .seal {
-  width: 34px; height: 34px;
-  border: 1px solid rgba(245, 240, 230, .55);
-  display: grid;
-  place-items: center;
-  font-size: 15px;
+.login-mark .logo-mark {
+  width: 42px;
+  height: 42px;
+  display: block;
+  border-radius: 50%;
+  flex: none;
 }
 
 .login-left h1 {
@@ -2202,11 +2203,7 @@ select.field { cursor: pointer; }
 
   <div class="login-left">
     <div class="login-mark">
-      <div class="seal">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-          <path d="M12 3 2.5 8 12 13l9.5-5L12 3Z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/>
-        </svg>
-      </div>
+      <img class="logo-mark" src="assets/logo-mark-192.png" alt="CampusLoop 标志">
       <span>CampusLoop</span>
     </div>
 
@@ -2233,7 +2230,7 @@ select.field { cursor: pointer; }
 
       <div class="auth-head">
         <h2 id="authTitle">核验身份</h2>
-        <p class="sub" id="authSub">请使用学校统一身份认证账号登录</p>
+        <p class="sub" id="authSub">用已有账号登录，或注册一个新账号</p>
       </div>
 
       <div class="auth-body" id="authBody"></div>
@@ -3334,7 +3331,7 @@ function seedData() {
     /** 个人资料（按学号存）：昵称 / 院系 / 联系方式 / 简介 由用户自己维护 */
     profiles: {},
 
-    /** 本站自行注册的账号（按学号存）：昵称 + 密码散列，与学校统一认证的账号互不干扰 */
+    /** 本站账号（按学号存）：昵称 + 密码散列 */
     accounts: {}
   };
 }
@@ -5172,16 +5169,16 @@ function runHeroSearch() {
 }
 
 /* =========================================================
-   十九、认证向导 / 登录 / 退出
+   十九、登录向导 / 注册 / 退出
 
-   借鉴真实教务 App 的认证流程：分步、每步只做一件事、可逐步回退，
-   失败时定位到具体环节（格式 / 密码 / 人机校验），并保留网页认证兜底。
+   分步进行、每步只做一件事、可逐步回退：
+   注册走「学号 → 昵称与密码 → 确认」，登录走「学号 → 密码」。
+   本站不接入、也不模拟任何学校系统。
    ========================================================= */
 var sessionUser = null;
 
-/* 演示用账号白名单
-   纯前端接不了真实统一认证，这里用本地白名单模拟「学号 + 密码」校验：
-   学号不在表里 → 提示未开通；密码不符 → 记一次失败，满 3 次转人机校验。 */
+/* 内置演示账号名册
+   仅供种子数据里的作者展示，站点不提供任何学校系统对接。 */
 var DEMO_PASSWORD = 'campus2026';
 
 var ACCOUNTS = [
@@ -5254,7 +5251,7 @@ function createLocalAccount(sid, name, pwd) {
   saveDB();
 }
 
-/* 该学号是否已被占用（学校统一认证 / 本站注册） */
+/* 该学号是否已经被注册过 */
 function sidTaken(sid) {
   if (findAccount(sid)) return 'school';
   if (getLocalAccount(sid)) return 'local';
@@ -5271,22 +5268,19 @@ function profileName(sid) {
 }
 
 var AUTH = {
-  mode: 'choose',      /* choose 选择入口 | school 统一认证 | register 本站注册 */
+  mode: 'choose',      /* choose 选择入口 | login 登录已有账号 | register 注册新账号 */
   step: 'mode',
   sid: '',
   name: '',
   fails: 0,
-  needCode: false,
-  captcha: '',
   remember: true,
   notify: true
 };
 
 var AUTH_META = {
-  mode: { idx: '入口', title: '选择进入方式', sub: '用学校统一身份认证登录，或直接注册一个本站账号' },
-  sid:  { idx: '身份', title: '核验身份', sub: '先确认学号归属，再进入统一身份认证' },
-  pwd:  { idx: '密码', title: '验证密码', sub: '密码在本机加密后提交，本站不保存明文' },
-  code: { idx: '校验', title: '安全校验', sub: '检测到连续失败的尝试，需要完成一次人机校验' },
+  mode: { idx: '入口', title: '登录或注册', sub: '用已有账号登录，或注册一个新账号' },
+  sid:  { idx: '账号', title: '输入学号', sub: '填你注册时使用的学号' },
+  pwd:  { idx: '密码', title: '验证密码', sub: '密码以散列形式保存，本站不记录明文' },
   reg:  { idx: '注册', title: '创建账号', sub: '填写学号、昵称与密码，账号保存在本机浏览器' },
   done: { idx: '完成', title: '还差一步', sub: '确认昵称与提醒设置，就可以进站了' }
 };
@@ -5296,12 +5290,12 @@ function authSeq() {
 
   var seq = ['mode'];
   if (AUTH.mode === 'register') {
-    seq.push('reg');
+    /* 注册要确认昵称，所以多一步 */
+    seq.push('reg', 'done');
   } else {
+    /* 登录直接进站，不再让人确认一遍已存在的昵称 */
     seq.push('sid', 'pwd');
-    if (AUTH.needCode) seq.push('code');
   }
-  seq.push('done');
   return seq;
 }
 
@@ -5338,37 +5332,6 @@ function sidHintText(sid) {
   return sidGrade(sid) + ' · 学号格式正确';
 }
 
-var probeTimer = null;
-
-function authProbeSync() {
-  var box = document.querySelector('.auth-probe');
-  var text = $('#authProbeText');
-  if (!box || !text) return;
-  clearTimeout(probeTimer);
-
-  if (!/^\d{10}$/.test(AUTH.sid)) {
-    box.className = 'auth-probe';
-    text.textContent = '认证节点 · 未连接';
-    return;
-  }
-
-  box.className = 'auth-probe is-run';
-  text.textContent = '正在连接统一身份认证服务…';
-
-  probeTimer = setTimeout(function () {
-    if (!$('#authProbeText')) return;
-
-    if (!findAccount(AUTH.sid) && !getLocalAccount(AUTH.sid)) {
-      box.className = 'auth-probe is-warn';
-      text.textContent = '未查询到该学号的认证记录';
-      return;
-    }
-
-    box.className = 'auth-probe is-ok';
-    text.textContent = '已连接 · 认证节点 18 ms · ' + sidGrade(AUTH.sid);
-  }, 620);
-}
-
 var AUTH_VIEW = {
 
   mode: function () {
@@ -5380,17 +5343,16 @@ var AUTH_VIEW = {
             '<span>用学号在本站自建一个账号</span></span>' +
           '<span class="ar">' + icon('arrow', 15) + '</span>' +
         '</button>' +
-        '<button type="button" class="auth-choice" data-act="auth-mode" data-mode="school">' +
+        '<button type="button" class="auth-choice" data-act="auth-mode" data-mode="login">' +
           '<span class="ic">' + icon('key', 16) + '</span>' +
-          '<span class="tx"><b>统一身份认证</b>' +
-            '<span>学校账号与本站账号都从这里进</span></span>' +
+          '<span class="tx"><b>登录已有账号</b>' +
+            '<span>用注册过的学号和密码进入</span></span>' +
           '<span class="ar">' + icon('arrow', 15) + '</span>' +
         '</button>' +
       '</div>' +
       '<div class="auth-hint">' + (Cloud.on
         ? '注册的账号会同步到云端，换台设备也能登录。'
-        : '注册的账号只保存在这台设备的浏览器里。') +
-        '想直接体验，可用演示学号 <b>' + ACCOUNTS[0].sid + '</b> 走统一认证。</div>' +
+        : '注册的账号只保存在这台设备的浏览器里。') + '</div>' +
     '</div>';
   },
 
@@ -5432,38 +5394,23 @@ var AUTH_VIEW = {
   sid: function () {
     return '<div class="auth-pane">' +
       '<div class="login-field">' +
-        '<label for="loginSid">学号 / 工号</label>' +
+        '<label for="loginSid">学号</label>' +
         '<input id="loginSid" type="text" inputmode="numeric" autocomplete="username" ' +
           'placeholder="例如 2023013872" value="' + escapeHtml(AUTH.sid) + '">' +
       '</div>' +
       '<div class="auth-hint" id="authHint">' + sidHintText(AUTH.sid) + '</div>' +
-      '<div class="auth-probe"><span class="dot"></span><span id="authProbeText">认证节点 · 未连接</span></div>' +
-      '<div class="auth-demo">' +
-        '演示学号 <b>' + ACCOUNTS[0].sid + '</b> · ' +
-        '<a href="javascript:void 0" id="quickFill" data-act="auth-demo">一键填入 →</a>' +
-      '</div>' +
     '</div>';
   },
 
   pwd: function () {
-    var isLocal = !!getLocalAccount(AUTH.sid);
-
-    var label = isLocal ? '本站账号密码' : '统一身份认证密码';
-    var hint = isLocal
-      ? '这是你在这台设备注册的账号，请输入注册时设置的密码。<br>连续输错 3 次会转入安全校验'
-      : '演示密码 <b>' + DEMO_PASSWORD + '</b> · ' +
-        '<a href="javascript:void 0" data-act="auth-fillpwd">点此填入</a><br>' +
-        '连续输错 3 次会转入安全校验';
-
     return '<div class="auth-pane">' +
       '<div class="auth-id">' + avatarOf(AUTH.name, 34, 15) +
         '<div class="who"><b>' + escapeHtml(AUTH.name) + '</b>' +
-        '<span>学号 ' + escapeHtml(AUTH.sid) + ' · ' +
-          (isLocal ? '本站注册账号' : sidGrade(AUTH.sid)) + '</span></div>' +
+        '<span>学号 ' + escapeHtml(AUTH.sid) + ' · ' + sidGrade(AUTH.sid) + '</span></div>' +
         '<button type="button" data-act="auth-goto" data-step="sid">更换</button>' +
       '</div>' +
       '<div class="login-field">' +
-        '<label for="loginPwd">' + label + '</label>' +
+        '<label for="loginPwd">密码</label>' +
         '<div class="pwd-wrap">' +
           '<input id="loginPwd" type="password" autocomplete="current-password" placeholder="请输入密码">' +
           '<button class="pwd-eye" type="button" data-act="auth-eye" aria-label="显示密码">' + icon('eye', 15) + '</button>' +
@@ -5474,28 +5421,11 @@ var AUTH_VIEW = {
         '<label><input id="loginRemember" type="checkbox"' + (AUTH.remember ? ' checked' : '') + '> 记住学号（不记密码）</label>' +
         '<a href="javascript:void 0" data-act="auth-forgot">忘记密码？</a>' +
       '</div>' +
-      '<div class="auth-hint">' + hint + '</div>' +
-    '</div>';
-  },
-
-  code: function () {
-    return '<div class="auth-pane">' +
-      '<div class="auth-captcha">' +
-        '<div class="auth-captcha-img" id="captchaImg" data-act="auth-captcha-reload" title="点我换一张"></div>' +
-        '<div class="auth-captcha-field login-field">' +
-          '<label for="authCode">校验码</label>' +
-          '<input id="authCode" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="四位数字">' +
-        '</div>' +
-      '</div>' +
-      '<div class="login-err" id="loginErr"></div>' +
-      '<div class="auth-hint">看不清可点左侧图片换一张。也可以 ' +
-        '<a href="javascript:void 0" data-act="auth-web">改用网页登录 →</a></div>' +
-      '<div id="authWebSlot"></div>' +
     '</div>';
   },
 
   done: function () {
-    var tag = AUTH.mode === 'register' ? '已创建' : '已认证';
+    var tag = AUTH.mode === 'register' ? '已创建' : '已登录';
     return '<div class="auth-pane">' +
       '<div class="auth-id">' + avatarOf(AUTH.name, 34, 15) +
         '<div class="who"><b>' + escapeHtml(AUTH.name) + '</b>' +
@@ -5564,9 +5494,6 @@ function renderAuth() {
   $('#authBody').innerHTML = AUTH_VIEW[AUTH.step]();
   $('#authFoot').innerHTML = authFootHtml();
 
-  if (AUTH.step === 'sid') authProbeSync();
-  if (AUTH.step === 'code') drawCaptcha();
-
   var field = $('#authBody input[type="text"], #authBody input[type="password"]');
   if (field) field.focus();
 }
@@ -5608,13 +5535,8 @@ function authNext() {
       return;
     }
 
-    var taken = sidTaken(regSid);
-    if (taken === 'school') {
-      err.textContent = '该学号已开通统一身份认证，请返回上一步改用「统一身份认证」登录';
-      return;
-    }
-    if (taken === 'local') {
-      err.textContent = '该学号已注册过，请返回上一步用「统一身份认证」输入这个账号的密码登录';
+    if (getLocalAccount(regSid)) {
+      err.textContent = '该学号已经注册过了，请返回上一步选择「登录已有账号」';
       return;
     }
 
@@ -5683,10 +5605,11 @@ function authNext() {
 
     AUTH.sid = sid;
 
-    /* 学号必须已有认证记录，否则不让进密码步——真实认证系统也是这个行为 */
-    if (!findAccount(sid) && !getLocalAccount(sid)) {
+    /* 学号必须注册过才进密码步：没账号就先去注册，
+       而不是让用户输一个必然失败的密码 */
+    if (!getLocalAccount(sid)) {
       hint.className = 'auth-hint is-err';
-      hint.innerHTML = '该学号没有认证记录。如果这是你自己的学号，可以 ' +
+      hint.innerHTML = '这个学号还没有注册过。如果这是你自己的学号，可以 ' +
         '<a href="javascript:void 0" data-act="auth-mode" data-mode="register">改用注册 →</a>';
       return;
     }
@@ -5704,82 +5627,40 @@ function authNext() {
     err = $('#loginErr');
 
     if (!pwd) {
-      err.textContent = '请输入统一身份认证密码';
-      $('#loginPwd').focus();
-      return;
-    }
-    if (pwd.length < 6) {
-      err.textContent = '密码长度不足 6 位，请确认是否输入完整';
+      err.textContent = '请输入密码';
       $('#loginPwd').focus();
       return;
     }
 
-    var account = findAccount(AUTH.sid);
     var local = getLocalAccount(AUTH.sid);
 
-    if (!account && !local) {
-      err.textContent = '该学号未开通统一身份认证。如果是你自己的学号，请返回上一步选择「注册新账号」';
+    if (!local) {
+      err.textContent = '这个学号还没有注册过，请返回上一步选择「注册新账号」';
       $('#loginPwd').select();
       return;
     }
 
-    /* 本站注册的账号比对本机散列，统一认证账号比对演示密码 */
-    var passed = local
-      ? hashPwd(pwd) === local.pwdHash
-      : pwd === DEMO_PASSWORD;
-
-    if (!passed) {
+    if (hashPwd(pwd) !== local.pwdHash) {
       AUTH.fails += 1;
-
-      if (AUTH.fails >= 3) {
-        AUTH.fails = 0;
-        AUTH.needCode = true;
-        AUTH.step = 'code';
-        renderAuth();
-        toast('密码连续错误，已转入安全校验', 'err');
-        return;
-      }
-
-      err.textContent = '密码不正确，还可尝试 ' + (3 - AUTH.fails) + ' 次' +
+      err.textContent = '密码不正确' +
         (fixed ? '（已自动去掉空格 / 全角字符）' : '') +
-        (local ? '' : '，演示密码 ' + DEMO_PASSWORD);
+        '，请再试一次';
       $('#loginPwd').select();
       return;
     }
 
-    AUTH.name = profileName(account ? account.sid : AUTH.sid) ||
-      (account ? account.name : local.name);
+    AUTH.fails = 0;
+    AUTH.name = profileName(AUTH.sid) || local.name;
     AUTH.remember = $('#loginRemember').checked;
-    AUTH.step = 'done';
-    renderAuth();
-    toast('身份认证通过');
+    AUTH.notify = true;
+    toast('登录成功');
+    finishLogin();
     return;
   }
 
   if (AUTH.step === 'code') {
-    var code = $('#authCode').value.trim();
-    err = $('#loginErr');
-
-    if (code.length !== 4) {
-      err.textContent = '请输入 4 位校验码';
-      $('#authCode').focus();
-      return;
-    }
-    if (code !== AUTH.captcha) {
-      err.textContent = '校验码不正确，已为你换一张';
-      drawCaptcha();
-      $('#authCode').value = '';
-      $('#authCode').focus();
-      return;
-    }
-
-    AUTH.needCode = false;
-    AUTH.fails = 0;
     AUTH.step = 'pwd';
     renderAuth();
-    var codeOk = $('#loginErr');
-    if (codeOk) codeOk.textContent = '人机校验通过，请重新输入密码';
-    toast('校验通过');
     return;
   }
 
@@ -5885,27 +5766,6 @@ function randInt(min, max) {
   return Math.round(min + Math.random() * (max - min));
 }
 
-function webLoginFallback() {
-  var slot = $('#authWebSlot');
-  if (!slot) return;
-
-  slot.innerHTML =
-    '<div class="auth-web">' +
-      '<div class="auth-web-bar">' + icon('key', 12) +
-        '<span>iaaa.campusloop.edu.cn/oauth/authorize</span></div>' +
-      '<div class="auth-web-body">正在安全页面完成认证，请稍候…' +
-        '<div class="auth-bar"><i></i></div></div>' +
-    '</div>';
-
-  setTimeout(function () {
-    if (!$('#authWebSlot')) return;
-    AUTH.needCode = false;
-    AUTH.step = 'done';
-    renderAuth();
-    toast('网页认证成功，已获取登录凭据');
-  }, 1500);
-}
-
 function onAuthInput(event) {
   var target = event.target;
 
@@ -5918,7 +5778,6 @@ function onAuthInput(event) {
       hint.className = 'auth-hint';
       hint.textContent = sidHintText(target.value);
     }
-    authProbeSync();
   }
 
   if (target.id === 'regSid') {
@@ -6244,10 +6103,6 @@ function bindEvents() {
 
       case 'auth-captcha-reload':
         drawCaptcha();
-        break;
-
-      case 'auth-web':
-        webLoginFallback();
         break;
 
       default:
