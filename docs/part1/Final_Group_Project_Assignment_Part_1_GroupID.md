@@ -31,8 +31,7 @@ We chose **CampusLoop**, a self-proposed project. It is one website that holds t
 
 ---
 
-## Notes on this proposal
+## Notes
 
-1. **Row 3 is deliberately unfinished.** The assignment marks it NO AI and requires real conversations. Anything written there by an AI would be invented evidence, so the row holds only the record table and prompts.
-2. **The product already runs, but not as a shared service right now.** A working build exists (one file, no build step, no dependencies) and runs in local mode out of the box. The shared-database mode is implemented and was verified end to end against a live database — a post made in one browser appeared in a second, unrelated browser — but that database has since been deleted and must be re-created before the Part 2 trials (a ten-minute step, documented in `final_project_mvp/README.md` §4). We do not present any of this as customer validation: a working product is not evidence that anyone needs it.
-3. **Nothing here is an MVP trial.** The discovery conversations in row 3 are the only customer evidence claimed at this stage; MVP trials belong to Part 2.
+- **The product builds and runs, but not as a shared service right now.** The hosted database used during development has been removed and must be re-created before any multi-device trial. We do not claim it as customer validation — a working product is not evidence that anyone needs it.
+- **The conversations in row 3 are the only customer evidence claimed at this stage.** MVP trials belong to Part 2.
