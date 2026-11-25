@@ -3,7 +3,7 @@
 **Project name** (same in the report, videos and final pitch; visible throughout both videos): **CampusLoop**
 
 **Registered group name / Group ID; registered member names / official IDs:**
-奶龙 Vibe 编码局 / 【待填：官方 Group ID，保留前导零】
+奶龙 Vibe 编码局 / Group ID：奶龙 Vibe 编码局（AILab 上组名即编号）
 张铖轩 26100164（组长 / coordinator）· 陈思峥 26100014 · 高斌雄 26100031 · 嵇翰林 26100048 · 马桢豪 26100096
 
 **Stage:** Proposal — due 26 November 2026, 17:00 (UTC+8)
