@@ -61,7 +61,7 @@ One file, no build step, no dependencies, no server. Open `final_project_mvp/ind
 
 | Date | Code | In / out of class | Task given | Help we gave | What we observed | What they said |
 |---|---|---|---|---|---|---|
-| 【待填】 | U1 | 【in / out】 | 假设你昨天在二教 301 落下了一个充电宝，今天想找回来。用这个网站做一遍你会做的事，边做边说出你在想什么。 | 【待填：无 / 指了一下搜索框 / …】 | 【待填：先点了哪里、卡在哪、用了多久】 | 【待填：原话】 |
+| 【待填】 | U1 | 【in / out】 | 假设你昨天在二教上完课，把一把黑色折叠伞落在教室了，今天想找回来。用这个网站做一遍你会做的事，边做边说出你在想什么。 | 【待填：无 / 指了一下搜索框 / …】 | 【待填：先点了哪里、卡在哪、用了多久】 | 【待填：原话】 |
 | 【待填】 | U2 | **out-of-class** | 同上 | 【待填】 | 【待填】 | 【待填】 |
 
 ### 4. Boundary and failure case — NO AI

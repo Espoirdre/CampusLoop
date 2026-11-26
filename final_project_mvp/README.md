@@ -108,7 +108,7 @@ This is the exact route used in the customer trials. It takes about 90 seconds.
 
 **Say this to the participant (Chinese):**
 
-> 假设你昨天下午在二教 301 落下了一个充电宝，今天想找回来。用这个网站做一遍你会做的事，边做边说出你在想什么。我不会提示你点哪里，卡住了也没关系。
+> 假设你昨天在二教上完课，把一把黑色折叠伞落在教室了，今天想找回来。用这个网站做一遍你会做的事，边做边说出你在想什么。我不会提示你点哪里，卡住了也没关系。
 
 **What the route exercises:**
 
